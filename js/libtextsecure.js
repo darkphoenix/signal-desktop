@@ -38400,10 +38400,84 @@ MessageReceiver.prototype.extend({
                 return this.handleSyncMessage(envelope, content.syncMessage);
             } else if (content.dataMessage) {
                 return this.handleDataMessage(envelope, content.dataMessage);
-            } else {
-                throw new Error('Got Content message with no dataMessage and no syncMessage');
+            } else if (content.nullMessage) {
+                return this.handleNullMessage(envelope, content.nullMessage);
+            } else if (content.callMessage) {
+                //return this.handleCallMessage(envelope, content.callMessage); for now
+                return true;
+            } else if (content.receiptMessage) {
+                return this.handleReceiptMessage(envelope, content.receiptMessage);
+            } else if (content.typingMessage) {
+                return this.handleTypingMessage(envelope, content.typingMessage);
             }
+            throw new Error('Got Content message with no dataMessage and no syncMessage');
         }.bind(this));
+    },
+    handleReceiptMessage: function (envelope, receiptMessage) {
+      if (
+        receiptMessage.type === textsecure.protobuf.ReceiptMessage.Type.DELIVERY
+      ) {
+        for (let i = 0; i < receiptMessage.timestamp.length; i += 1) {
+          const ev = new Event('delivery');
+          ev.deliveryReceipt = {
+            timestamp: receiptMessage.timestamp[i].toNumber(),
+            source: envelope.source,
+            sourceDevice: envelope.sourceDevice,
+          };
+          this.dispatchEvent(ev);
+        }
+      } else if (
+        receiptMessage.type === textsecure.protobuf.ReceiptMessage.Type.READ
+      ) {
+        for (let i = 0; i < receiptMessage.timestamp.length; i += 1) {
+          const ev = new Event('read');
+          ev.timestamp = envelope.timestamp.toNumber();
+          ev.read = {
+            timestamp: receiptMessage.timestamp[i].toNumber(),
+            reader: envelope.source,
+          };
+          this.dispatchEvent(ev);
+        }
+      }
+    },
+    handleTypingMessage: function (envelope, typingMessage) {
+      const ev = new Event('typing');
+  
+      if (envelope.timestamp && typingMessage.timestamp) {
+        const envelopeTimestamp = envelope.timestamp.toNumber();
+        const typingTimestamp = typingMessage.timestamp.toNumber();
+  
+        if (typingTimestamp !== envelopeTimestamp) {
+          window.log.warn(
+            `Typing message envelope timestamp (${envelopeTimestamp}) did not match typing timestamp (${typingTimestamp})`
+          );
+          return;
+        }
+      }
+  
+      ev.sender = envelope.source;
+      ev.senderDevice = envelope.sourceDevice;
+      ev.typing = {
+        typingMessage,
+        timestamp: typingMessage.timestamp
+          ? typingMessage.timestamp.toNumber()
+          : Date.now(),
+        groupId: typingMessage.groupId
+          ? typingMessage.groupId.toString('binary')
+          : null,
+        started:
+          typingMessage.action ===
+          textsecure.protobuf.TypingMessage.Action.STARTED,
+        stopped:
+          typingMessage.action ===
+          textsecure.protobuf.TypingMessage.Action.STOPPED,
+      };
+  
+      this.in
+      this.dispatchEvent(ev);
+    },
+    handleNullMessage: function (envelope) {
+      window.log.info('null message from', this.getEnvelopeId(envelope));
     },
     handleSyncMessage: function(envelope, syncMessage) {
         if (envelope.source !== this.number) {
