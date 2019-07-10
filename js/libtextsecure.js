@@ -39281,7 +39281,23 @@ MessageSender.prototype = {
             return this.sendIndividualProto(myNumber, contentMessage, Date.now());
         }
     },
+    sendReadReceipts: function(sender, timestamps, options) {
+      const receiptMessage = new textsecure.protobuf.ReceiptMessage();
+      receiptMessage.type = textsecure.protobuf.ReceiptMessage.Type.READ;
+      receiptMessage.timestamp = timestamps;
 
+      const contentMessage = new textsecure.protobuf.Content();
+      contentMessage.receiptMessage = receiptMessage;
+
+      const silent = true;
+      return this.sendIndividualProto(
+        sender,
+        contentMessage,
+        Date.now(),
+        silent,
+        options
+      );
+    },
     sendGroupProto: function(numbers, proto, timestamp) {
         timestamp = timestamp || Date.now();
         var me = textsecure.storage.user.getNumber();
@@ -39525,6 +39541,7 @@ textsecure.MessageSender = function(url, ports, username, password) {
     this.leaveGroup                        = sender.leaveGroup                       .bind(sender);
     this.sendSyncMessage                   = sender.sendSyncMessage                  .bind(sender);
     this.syncReadMessages                  = sender.syncReadMessages                 .bind(sender);
+    this.sendReadReceipts                  = sender.sendReadReceipts                 .bind(sender);
 };
 
 textsecure.MessageSender.prototype = {
