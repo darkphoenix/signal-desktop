@@ -38477,7 +38477,7 @@ MessageReceiver.prototype.extend({
       this.dispatchEvent(ev);
     },
     handleNullMessage: function (envelope) {
-      window.log.info('null message from', this.getEnvelopeId(envelope));
+      window.log.warn('null message from', this.getEnvelopeId(envelope));
     },
     handleSyncMessage: function(envelope, syncMessage) {
         if (envelope.source !== this.number) {
