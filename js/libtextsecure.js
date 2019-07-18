@@ -39198,7 +39198,27 @@ MessageSender.prototype = {
             });
         }.bind(this));
     },
-
+    sendMessageProtoAndWait: function(timestamp, numbers, message, silent, options = {}) {
+      return new Promise((resolve, reject) => {
+        const callback = result => {
+          if (result && result.errors && result.errors.length > 0) {
+            return reject(result);
+          }
+  
+          return resolve(result);
+        };
+  
+        this.sendMessageProto(
+          timestamp,
+          numbers,
+          message,
+          callback,
+          silent,
+          options
+        );
+      });
+    },
+    
     sendIndividualProto: function(number, proto, timestamp) {
         return new Promise(function(resolve, reject) {
             this.sendMessageProto(timestamp, [number], proto, function(res) {
@@ -39262,6 +39282,53 @@ MessageSender.prototype = {
 
             return this.sendIndividualProto(myNumber, contentMessage, Date.now());
         }
+    },
+    async sendTypingMessage(options = {}, sendOptions = {}) {
+      const ACTION_ENUM = textsecure.protobuf.TypingMessage.Action;
+      const { recipientId, groupId, groupNumbers, isTyping, timestamp } = options;
+  
+      // We don't want to send typing messages to our other devices, but we will
+      //   in the group case.
+      const myNumber = textsecure.storage.user.getNumber();
+      if (recipientId && myNumber === recipientId) {
+        return null;
+      }
+  
+      if (!recipientId && !groupId) {
+        throw new Error('Need to provide either recipientId or groupId!');
+      }
+  
+      const recipients = groupId
+        ? _.without(groupNumbers, myNumber)
+        : [recipientId];
+      const groupIdBuffer = groupId
+        ? window.Signal.Crypto.fromEncodedBinaryToArrayBuffer(groupId)
+        : null;
+  
+      const action = isTyping ? ACTION_ENUM.STARTED : ACTION_ENUM.STOPPED;
+      const finalTimestamp = timestamp || Date.now();
+  
+      const typingMessage = new textsecure.protobuf.TypingMessage();
+      typingMessage.groupId = groupIdBuffer;
+      typingMessage.action = action;
+      typingMessage.timestamp = finalTimestamp;
+  
+      const contentMessage = new textsecure.protobuf.Content();
+      contentMessage.typingMessage = typingMessage;
+  
+      const silent = true;
+      const online = true;
+  
+      return this.sendMessageProtoAndWait(
+        finalTimestamp,
+        recipients,
+        contentMessage,
+        silent,
+        {
+          ...sendOptions,
+          online,
+        }
+      );
     },
     syncReadMessages: function(reads) {
         var myNumber = textsecure.storage.user.getNumber();
@@ -39533,6 +39600,7 @@ textsecure.MessageSender = function(url, ports, username, password) {
     this.sendMessageToNumber               = sender.sendMessageToNumber              .bind(sender);
     this.closeSession                      = sender.closeSession                     .bind(sender);
     this.sendMessageToGroup                = sender.sendMessageToGroup               .bind(sender);
+    this.sendTypingMessage                 = sender.sendTypingMessage                .bind(sender);
     this.createGroup                       = sender.createGroup                      .bind(sender);
     this.updateGroup                       = sender.updateGroup                      .bind(sender);
     this.addNumberToGroup                  = sender.addNumberToGroup                 .bind(sender);
