@@ -39302,7 +39302,7 @@ MessageSender.prototype = {
         ? _.without(groupNumbers, myNumber)
         : [recipientId];
       const groupIdBuffer = groupId
-        ? window.Signal.Crypto.fromEncodedBinaryToArrayBuffer(groupId)
+        ? stringToArrayBuffer(groupId)
         : null;
   
       const action = isTyping ? ACTION_ENUM.STARTED : ACTION_ENUM.STOPPED;
