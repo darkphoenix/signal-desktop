@@ -14,8 +14,8 @@
 /* eslint-disable more/no-then */
 
 const WORKER_TIMEOUT = 60 * 1000; // one minute
+//const _utilWorker = new Worker('/js/util_worker.js');
 
-const _utilWorker = new Worker('js/util_worker.js');
 const _jobs = Object.create(null);
 const _DEBUG = false;
 let _jobCounter = 0;
@@ -73,11 +73,34 @@ function _getJob(id) {
   return _jobs[id];
 }
 
+const functions = {
+  stringToArrayBufferBase64,
+  arrayBufferToStringBase64,
+};
+
+function stringToArrayBufferBase64(string) {
+  return dcodeIO.ByteBuffer.wrap(string, 'base64').toArrayBuffer();
+}
+function arrayBufferToStringBase64(arrayBuffer) {
+  return dcodeIO.ByteBuffer.wrap(arrayBuffer).toString('base64');
+}
+
 async function callWorker(fnName, ...args) {
   const jobId = _makeJob(fnName);
-
   return new Promise((resolve, reject) => {
-    _utilWorker.postMessage([jobId, fnName, ...args]);
+    //_utilWorker.postMessage([jobId, fnName, ...args]);
+    try {
+      const fn = functions[fnName];
+      if (!fn) {
+        throw new Error(`Worker: job ${jobId} did not find function ${fnName}`);
+      }
+      const result = fn(...args);
+      return resolve(result);
+      //postMessage([jobId, null, result]);
+    } catch (error) {
+      const errorForDisplay = prepareErrorForPostMessage(error);
+      //postMessage([jobId, errorForDisplay]);
+    }
 
     _updateJob(jobId, {
       resolve,
@@ -92,28 +115,28 @@ async function callWorker(fnName, ...args) {
   });
 }
 
-_utilWorker.onmessage = e => {
-  const [jobId, errorForDisplay, result] = e.data;
+// _utilWorker.onmessage = e => {
+//   const [jobId, errorForDisplay, result] = e.data;
 
-  const job = _getJob(jobId);
-  if (!job) {
-    throw new Error(
-      `Received worker reply to job ${jobId}, but did not have it in our registry!`
-    );
-  }
+//   const job = _getJob(jobId);
+//   if (!job) {
+//     throw new Error(
+//       `Received worker reply to job ${jobId}, but did not have it in our registry!`
+//     );
+//   }
 
-  const { resolve, reject, fnName } = job;
+//   const { resolve, reject, fnName } = job;
 
-  if (errorForDisplay) {
-    return reject(
-      new Error(
-        `Error received from worker job ${jobId} (${fnName}): ${errorForDisplay}`
-      )
-    );
-  }
+//   if (errorForDisplay) {
+//     return reject(
+//       new Error(
+//         `Error received from worker job ${jobId} (${fnName}): ${errorForDisplay}`
+//       )
+//     );
+//   }
 
-  return resolve(result);
-};
+//   return resolve(result);
+// };
 
 function MessageReceiver(username, password, signalingKey, options = {}) {
   this.count = 0;
