@@ -380,6 +380,14 @@
         ]);
       }
 
+      if (window.isBeforeVersion(lastVersion, 'v1.26.0')) {
+        // Ensure that we re-register our support for sealed sender
+        await storage.put(
+          'hasRegisterSupportForUnauthenticatedDelivery',
+          false
+        );
+      }
+
       // This one should always be last - it could restart the app
       if (window.isBeforeVersion(lastVersion, 'v1.15.0-beta.5')) {
         await window.Signal.Logs.deleteAll();
@@ -1690,13 +1698,12 @@
   }
 
   async function onViewSync(ev) {
-    const { viewedAt, source, timestamp } = ev;
-    window.log.info(`view sync ${source} ${timestamp}, viewed at ${viewedAt}`);
+    const { source, timestamp } = ev;
+    window.log.info(`view sync ${source} ${timestamp}`);
 
     const sync = Whisper.ViewSyncs.add({
       source,
       timestamp,
-      viewedAt,
     });
 
     sync.on('remove', ev.confirm);

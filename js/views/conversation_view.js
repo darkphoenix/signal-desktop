@@ -19,6 +19,9 @@
   const {
     upgradeMessageSchema,
     getAbsoluteAttachmentPath,
+    copyIntoTempDirectory,
+    getAbsoluteTempPath,
+    deleteTempFile,
   } = window.Signal.Migrations;
 
   Whisper.ExpiredToast = Whisper.ToastView.extend({
@@ -954,7 +957,7 @@
       };
 
       const view = new Whisper.ReactWrapperView({
-        className: 'panel-wrapper',
+        className: 'panel',
         Component: Signal.Components.MediaGallery,
         props: await getProps(),
         onClose: () => {
@@ -1324,17 +1327,33 @@
 
       if (!message.isTapToView()) {
         throw new Error(
-          `displayTapToViewMessage: Message ${message.idForLogging()} is not tap to view`
+          `displayTapToViewMessage: Message ${message.idForLogging()} is not a tap to view message`
         );
       }
 
-      if (message.isTapToViewExpired()) {
-        return;
+      if (message.isErased()) {
+        throw new Error(
+          `displayTapToViewMessage: Message ${message.idForLogging()} is already erased`
+        );
       }
 
-      await message.startTapToViewTimer();
+      const firstAttachment = message.get('attachments')[0];
+      if (!firstAttachment || !firstAttachment.path) {
+        throw new Error(
+          `displayTapToViewMessage: Message ${message.idForLogging()} had no first attachment with path`
+        );
+      }
 
-      const closeLightbox = () => {
+      const absolutePath = getAbsoluteAttachmentPath(firstAttachment.path);
+      const tempPath = await copyIntoTempDirectory(absolutePath);
+      const tempAttachment = {
+        ...firstAttachment,
+        path: tempPath,
+      };
+
+      await message.markViewed();
+
+      const closeLightbox = async () => {
         if (!this.lightboxView) {
           return;
         }
@@ -1345,6 +1364,8 @@
         this.stopListening(message);
         Signal.Backbone.Views.Lightbox.hide();
         lightboxView.remove();
+
+        await deleteTempFile(tempPath);
       };
       this.listenTo(message, 'expired', closeLightbox);
       this.listenTo(message, 'change', () => {
@@ -1354,14 +1375,11 @@
       });
 
       const getProps = () => {
-        const firstAttachment = message.get('attachments')[0];
-        const { path, contentType } = firstAttachment;
+        const { path, contentType } = tempAttachment;
 
         return {
-          objectURL: getAbsoluteAttachmentPath(path),
+          objectURL: getAbsoluteTempPath(path),
           contentType,
-          timerExpiresAt: message.get('messageTimerExpiresAt'),
-          timerDuration: message.get('messageTimer') * 1000,
         };
       };
       this.lightboxView = new Whisper.ReactWrapperView({
@@ -1537,7 +1555,7 @@
 
       const props = message.getPropsForMessageDetail();
       const view = new Whisper.ReactWrapperView({
-        className: 'message-detail-wrapper',
+        className: 'panel message-detail-wrapper',
         Component: Signal.Components.MessageDetail,
         props,
         onClose,
@@ -1597,11 +1615,11 @@
 
     listenBack(view) {
       this.panels = this.panels || [];
-      if (this.panels.length > 0) {
-        this.panels[0].$el.hide();
-      }
       this.panels.unshift(view);
-      view.$el.insertBefore(this.$('.panel').first());
+      view.$el.insertAfter(this.$('.panel').last());
+      view.$el.one('animationend', () => {
+        view.$el.addClass('panel--static');
+      });
     },
     resetPanel() {
       if (!this.panels || !this.panels.length) {
@@ -1611,14 +1629,15 @@
       const view = this.panels.shift();
 
       if (this.panels.length > 0) {
-        this.panels[0].$el.show();
+        this.panels[0].$el.fadeIn(250);
       }
-      view.remove();
-
-      if (this.panels.length === 0) {
-        // Make sure poppers are positioned properly
-        window.dispatchEvent(new Event('resize'));
-      }
+      view.$el.addClass('panel--remove').one('transitionend', () => {
+        view.remove();
+        if (this.panels.length === 0) {
+          // Make sure poppers are positioned properly
+          window.dispatchEvent(new Event('resize'));
+        }
+      });
     },
 
     endSession() {
