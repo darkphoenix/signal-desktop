@@ -2136,7 +2136,7 @@
           }
 
           if (message.get('unread')) {
-            await conversation.notify(message);
+            //await conversation.notify(message);
           }
 
           confirm();
