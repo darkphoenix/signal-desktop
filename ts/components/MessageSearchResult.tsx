@@ -8,10 +8,13 @@ import { ContactName } from './conversation/ContactName';
 
 import { LocalizerType } from '../types/Util';
 
-export type PropsData = {
+export type PropsDataType = {
+  isSelected?: boolean;
+  isSearchingInConversation?: boolean;
+
   id: string;
   conversationId: string;
-  receivedAt: number;
+  sentAt: number;
 
   snippet: string;
 
@@ -33,16 +36,17 @@ export type PropsData = {
   };
 };
 
-type PropsHousekeeping = {
-  isSelected?: boolean;
-
+type PropsHousekeepingType = {
   i18n: LocalizerType;
-  onClick: (conversationId: string, messageId?: string) => void;
+  openConversationInternal: (
+    conversationId: string,
+    messageId?: string
+  ) => void;
 };
 
-type Props = PropsData & PropsHousekeeping;
+type PropsType = PropsDataType & PropsHousekeepingType;
 
-export class MessageSearchResult extends React.PureComponent<Props> {
+export class MessageSearchResult extends React.PureComponent<PropsType> {
   public renderFromName() {
     const { from, i18n, to } = this.props;
 
@@ -72,13 +76,13 @@ export class MessageSearchResult extends React.PureComponent<Props> {
   }
 
   public renderFrom() {
-    const { i18n, to } = this.props;
+    const { i18n, to, isSearchingInConversation } = this.props;
     const fromName = this.renderFromName();
 
-    if (!to.isMe) {
+    if (!to.isMe && !isSearchingInConversation) {
       return (
         <div className="module-message-search-result__header__from">
-          {fromName} {i18n('to')}{' '}
+          {fromName} {i18n('toJoiner')}{' '}
           <span className="module-mesages-search-result__header__group">
             <ContactName
               phoneNumber={to.phoneNumber}
@@ -111,7 +115,7 @@ export class MessageSearchResult extends React.PureComponent<Props> {
         noteToSelf={isNoteToSelf}
         phoneNumber={from.phoneNumber}
         profileName={from.profileName}
-        size={48}
+        size={52}
       />
     );
   }
@@ -123,8 +127,8 @@ export class MessageSearchResult extends React.PureComponent<Props> {
       id,
       isSelected,
       conversationId,
-      onClick,
-      receivedAt,
+      openConversationInternal,
+      sentAt,
       snippet,
       to,
     } = this.props;
@@ -134,31 +138,31 @@ export class MessageSearchResult extends React.PureComponent<Props> {
     }
 
     return (
-      <div
-        role="button"
+      <button
         onClick={() => {
-          if (onClick) {
-            onClick(conversationId, id);
+          if (openConversationInternal) {
+            openConversationInternal(conversationId, id);
           }
         }}
         className={classNames(
           'module-message-search-result',
           isSelected ? 'module-message-search-result--is-selected' : null
         )}
+        data-id={id}
       >
         {this.renderAvatar()}
         <div className="module-message-search-result__text">
           <div className="module-message-search-result__header">
             {this.renderFrom()}
             <div className="module-message-search-result__header__timestamp">
-              <Timestamp timestamp={receivedAt} i18n={i18n} />
+              <Timestamp timestamp={sentAt} i18n={i18n} />
             </div>
           </div>
           <div className="module-message-search-result__body">
             <MessageBodyHighlight text={snippet} i18n={i18n} />
           </div>
         </div>
-      </div>
+      </button>
     );
   }
 }

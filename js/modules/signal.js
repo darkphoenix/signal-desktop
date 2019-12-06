@@ -28,51 +28,25 @@ const {
   ContactDetail,
 } = require('../../ts/components/conversation/ContactDetail');
 const { ContactListItem } = require('../../ts/components/ContactListItem');
-const { ContactName } = require('../../ts/components/conversation/ContactName');
 const {
   ConversationHeader,
 } = require('../../ts/components/conversation/ConversationHeader');
-const {
-  EmbeddedContact,
-} = require('../../ts/components/conversation/EmbeddedContact');
 const { Emojify } = require('../../ts/components/conversation/Emojify');
-const {
-  GroupNotification,
-} = require('../../ts/components/conversation/GroupNotification');
 const { Lightbox } = require('../../ts/components/Lightbox');
 const { LightboxGallery } = require('../../ts/components/LightboxGallery');
 const {
   MediaGallery,
 } = require('../../ts/components/conversation/media-gallery/MediaGallery');
-const { Message } = require('../../ts/components/conversation/Message');
-const { MessageBody } = require('../../ts/components/conversation/MessageBody');
 const {
   MessageDetail,
 } = require('../../ts/components/conversation/MessageDetail');
 const { Quote } = require('../../ts/components/conversation/Quote');
 const {
-  ResetSessionNotification,
-} = require('../../ts/components/conversation/ResetSessionNotification');
-const {
-  SafetyNumberNotification,
-} = require('../../ts/components/conversation/SafetyNumberNotification');
-const {
   StagedLinkPreview,
 } = require('../../ts/components/conversation/StagedLinkPreview');
-const {
-  TimerNotification,
-} = require('../../ts/components/conversation/TimerNotification');
-const {
-  TypingBubble,
-} = require('../../ts/components/conversation/TypingBubble');
-const {
-  UnsupportedMessage,
-} = require('../../ts/components/conversation/UnsupportedMessage');
-const {
-  VerificationNotification,
-} = require('../../ts/components/conversation/VerificationNotification');
 
 // State
+const { createTimeline } = require('../../ts/state/roots/createTimeline');
 const {
   createCompositionArea,
 } = require('../../ts/state/roots/createCompositionArea');
@@ -83,13 +57,20 @@ const {
 const {
   createStickerPreviewModal,
 } = require('../../ts/state/roots/createStickerPreviewModal');
+const {
+  createShortcutGuideModal,
+} = require('../../ts/state/roots/createShortcutGuideModal');
 
 const { createStore } = require('../../ts/state/createStore');
 const conversationsDuck = require('../../ts/state/ducks/conversations');
 const emojisDuck = require('../../ts/state/ducks/emojis');
 const itemsDuck = require('../../ts/state/ducks/items');
+const searchDuck = require('../../ts/state/ducks/search');
 const stickersDuck = require('../../ts/state/ducks/stickers');
 const userDuck = require('../../ts/state/ducks/user');
+
+const conversationsSelectors = require('../../ts/state/selectors/conversations');
+const searchSelectors = require('../../ts/state/selectors/search');
 
 // Migrations
 const {
@@ -129,20 +110,22 @@ function initializeMigrations({
     return null;
   }
   const {
+    createAbsolutePathGetter,
+    createReader,
+    createWriterForExisting,
+    createWriterForNew,
+    createDoesExist,
+    getDraftPath,
     getPath,
     getStickersPath,
     getTempPath,
-    createReader,
-    createAbsolutePathGetter,
-    createWriterForNew,
-    createWriterForExisting,
   } = Attachments;
   const {
-    makeObjectUrl,
-    revokeObjectUrl,
     getImageDimensions,
     makeImageThumbnail,
+    makeObjectUrl,
     makeVideoScreenshot,
+    revokeObjectUrl,
   } = VisualType;
 
   const attachmentsPath = getPath(userDataPath);
@@ -157,6 +140,7 @@ function initializeMigrations({
   const copyIntoAttachmentsDirectory = Attachments.copyIntoAttachmentsDirectory(
     attachmentsPath
   );
+  const doesAttachmentExist = createDoesExist(attachmentsPath);
 
   const stickersPath = getStickersPath(userDataPath);
   const writeNewStickerData = createWriterForNew(stickersPath);
@@ -173,18 +157,27 @@ function initializeMigrations({
     tempPath
   );
 
+  const draftPath = getDraftPath(userDataPath);
+  const getAbsoluteDraftPath = createAbsolutePathGetter(draftPath);
+  const writeNewDraftData = createWriterForNew(draftPath);
+  const deleteDraftFile = Attachments.createDeleter(draftPath);
+  const readDraftData = createReader(draftPath);
+
   return {
     attachmentsPath,
     copyIntoAttachmentsDirectory,
     copyIntoTempDirectory,
     deleteAttachmentData: deleteOnDisk,
+    deleteDraftFile,
     deleteExternalMessageFiles: MessageType.deleteAllExternalFiles({
       deleteAttachmentData: Type.deleteData(deleteOnDisk),
       deleteOnDisk,
     }),
     deleteSticker,
     deleteTempFile,
+    doesAttachmentExist,
     getAbsoluteAttachmentPath,
+    getAbsoluteDraftPath,
     getAbsoluteStickerPath,
     getAbsoluteTempPath,
     getPlaceholderMigrations,
@@ -195,6 +188,7 @@ function initializeMigrations({
     loadQuoteData,
     loadStickerData,
     readAttachmentData,
+    readDraftData,
     readStickerData,
     readTempData,
     run,
@@ -244,6 +238,7 @@ function initializeMigrations({
       logger,
     }),
     writeNewAttachmentData: createWriterForNew(attachmentsPath),
+    writeNewDraftData,
   };
 }
 
@@ -264,48 +259,46 @@ exports.setup = (options = {}) => {
     CaptionEditor,
     ContactDetail,
     ContactListItem,
-    ContactName,
     ConversationHeader,
-    EmbeddedContact,
     Emojify,
-    GroupNotification,
     Lightbox,
     LightboxGallery,
     MediaGallery,
-    Message,
-    MessageBody,
     MessageDetail,
     Quote,
-    ResetSessionNotification,
-    SafetyNumberNotification,
     StagedLinkPreview,
-    TimerNotification,
     Types: {
       Message: MediaGalleryMessage,
     },
-    TypingBubble,
-    UnsupportedMessage,
-    VerificationNotification,
   };
 
   const Roots = {
     createCompositionArea,
     createLeftPane,
+    createShortcutGuideModal,
     createStickerManager,
     createStickerPreviewModal,
+    createTimeline,
   };
   const Ducks = {
     conversations: conversationsDuck,
     emojis: emojisDuck,
     items: itemsDuck,
     user: userDuck,
+    search: searchDuck,
     stickers: stickersDuck,
   };
+  const Selectors = {
+    conversations: conversationsSelectors,
+    search: searchSelectors,
+  };
+
   const State = {
     bindActionCreators,
     createStore,
     Roots,
     Ducks,
+    Selectors,
   };
 
   const Types = {

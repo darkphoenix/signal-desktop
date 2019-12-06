@@ -22,17 +22,18 @@ const contact = {
   onSendMessage: () => console.log('onSendMessage'),
   signalAccount: '+12025550000',
 };
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contact}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -40,9 +41,10 @@ const contact = {
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contact}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -50,9 +52,10 @@ const contact = {
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contact}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -61,8 +64,9 @@ const contact = {
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contact}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
+  </div>
 </util.ConversationContext>;
 ```
 
@@ -88,17 +92,18 @@ const contact = {
   onSendMessage: () => console.log('onSendMessage'),
   signalAccount: '+12025550000',
 };
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contact}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -106,17 +111,19 @@ const contact = {
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contact}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
+  </div>
 </util.ConversationContext>;
 ```
 
 #### Really long data
 
-```
+```jsx
 const contact = {
   name: {
-    displayName: 'Dr. First Middle Last Junior Senior and all that and a bag of chips',
+    displayName:
+      'Dr. First Middle Last Junior Senior and all that and a bag of chips',
   },
   number: [
     {
@@ -130,24 +137,28 @@ const contact = {
     },
   },
 };
-<util.ConversationContext theme={util.theme}  ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
-    authorColor="green"
-    direction="incoming"
-    i18n={util.i18n}
-    timestamp={Date.now()}
-    contact={contact}/>
-  </li>
-  <li>
-  <Message
-    authorColor="green"
-    direction="outgoing"
-    status="delivered"
-    i18n={util.i18n}
-    timestamp={Date.now()}
-    contact={contact}/>
-  </li>
+      authorColor="green"
+      direction="incoming"
+      i18n={util.i18n}
+      timestamp={Date.now()}
+      contact={contact}
+      selectMessage={(...args) => console.log('selectMessage', args)}
+    />
+  </div>
+  <div className="module-message-container">
+    <Message
+      authorColor="green"
+      direction="outgoing"
+      status="delivered"
+      i18n={util.i18n}
+      timestamp={Date.now()}
+      contact={contact}
+      selectMessage={(...args) => console.log('selectMessage', args)}
+    />
+  </div>
 </util.ConversationContext>;
 ```
 
@@ -171,8 +182,8 @@ const contact = {
   },
   signalAccount: '+12025550000',
 };
-<util.ConversationContext theme={util.theme} type="group" ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       conversationType="group"
@@ -182,9 +193,10 @@ const contact = {
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contact}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -194,9 +206,10 @@ const contact = {
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contact}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -206,8 +219,9 @@ const contact = {
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contact}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
+  </div>
 </util.ConversationContext>;
 ```
 
@@ -230,17 +244,18 @@ const contact = {
     },
   },
 };
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contact}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -248,9 +263,10 @@ const contact = {
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contact}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -258,9 +274,10 @@ const contact = {
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contact}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -269,8 +286,9 @@ const contact = {
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contact}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
+  </div>
 </util.ConversationContext>;
 ```
 
@@ -291,17 +309,18 @@ const contact = {
     },
   },
 };
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contact}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -309,9 +328,10 @@ const contact = {
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contact}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -319,9 +339,10 @@ const contact = {
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contact}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -330,8 +351,9 @@ const contact = {
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contact}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
+  </div>
 </util.ConversationContext>;
 ```
 
@@ -355,17 +377,18 @@ const contact = {
   },
   signalAccount: '+12025551000',
 };
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contact}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -373,9 +396,10 @@ const contact = {
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contact}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -383,9 +407,10 @@ const contact = {
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contact}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -394,8 +419,9 @@ const contact = {
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contact}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
+  </div>
 </util.ConversationContext>;
 ```
 
@@ -413,17 +439,18 @@ const contact = {
     },
   ],
 };
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contact}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -431,9 +458,10 @@ const contact = {
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contact}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -441,9 +469,10 @@ const contact = {
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contact}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -452,8 +481,9 @@ const contact = {
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contact}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
+  </div>
 </util.ConversationContext>;
 ```
 
@@ -461,17 +491,18 @@ const contact = {
 
 ```jsx
 const contact = {};
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contact}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -479,9 +510,10 @@ const contact = {};
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contact}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -489,9 +521,10 @@ const contact = {};
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contact}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -500,8 +533,9 @@ const contact = {};
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contact}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
+  </div>
 </util.ConversationContext>;
 ```
 
@@ -541,8 +575,8 @@ const contactWithoutAccount = {
     },
   },
 };
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       text="I want to introduce you to Someone..."
       authorColor="green"
@@ -550,9 +584,10 @@ const contactWithoutAccount = {
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contactWithAccount}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       text="I want to introduce you to Someone..."
       authorColor="green"
@@ -561,9 +596,10 @@ const contactWithoutAccount = {
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contactWithAccount}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       text="I want to introduce you to Someone..."
       authorColor="green"
@@ -571,9 +607,10 @@ const contactWithoutAccount = {
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contactWithAccount}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       text="I want to introduce you to Someone..."
       authorColor="green"
@@ -582,9 +619,10 @@ const contactWithoutAccount = {
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contactWithAccount}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       text="I want to introduce you to Someone..."
       authorColor="green"
@@ -593,32 +631,10 @@ const contactWithoutAccount = {
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contactWithoutAccount}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
-  <li>
-    <Message
-      text="I want to introduce you to Someone..."
-      authorColor="green"
-      direction="outgoing"
-      collapseMetadata
-      status="delivered"
-      i18n={util.i18n}
-      timestamp={Date.now()}
-      contact={contactWithoutAccount}
-    />
-  </li>
-  <li>
-    <Message
-      text="I want to introduce you to Someone..."
-      authorColor="green"
-      direction="incoming"
-      collapseMetadata
-      i18n={util.i18n}
-      timestamp={Date.now()}
-      contact={contactWithoutAccount}
-    />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       text="I want to introduce you to Someone..."
       authorColor="green"
@@ -628,7 +644,33 @@ const contactWithoutAccount = {
       i18n={util.i18n}
       timestamp={Date.now()}
       contact={contactWithoutAccount}
+      selectMessage={(...args) => console.log('selectMessage', args)}
     />
-  </li>
+  </div>
+  <div className="module-message-container">
+    <Message
+      text="I want to introduce you to Someone..."
+      authorColor="green"
+      direction="incoming"
+      collapseMetadata
+      i18n={util.i18n}
+      timestamp={Date.now()}
+      contact={contactWithoutAccount}
+      selectMessage={(...args) => console.log('selectMessage', args)}
+    />
+  </div>
+  <div className="module-message-container">
+    <Message
+      text="I want to introduce you to Someone..."
+      authorColor="green"
+      direction="outgoing"
+      collapseMetadata
+      status="delivered"
+      i18n={util.i18n}
+      timestamp={Date.now()}
+      contact={contactWithoutAccount}
+      selectMessage={(...args) => console.log('selectMessage', args)}
+    />
+  </div>
 </util.ConversationContext>;
 ```

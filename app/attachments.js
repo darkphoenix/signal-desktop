@@ -10,6 +10,7 @@ const { map, isArrayBuffer, isString } = require('lodash');
 const PATH = 'attachments.noindex';
 const STICKER_PATH = 'stickers.noindex';
 const TEMP_PATH = 'temp';
+const DRAFT_PATH = 'drafts.noindex';
 
 exports.getAllAttachments = async userDataPath => {
   const dir = exports.getPath(userDataPath);
@@ -22,6 +23,22 @@ exports.getAllAttachments = async userDataPath => {
 exports.getAllStickers = async userDataPath => {
   const dir = exports.getStickersPath(userDataPath);
   const pattern = path.join(dir, '**', '*');
+
+  const files = await pify(glob)(pattern, { nodir: true });
+  return map(files, file => path.relative(dir, file));
+};
+
+exports.getAllDraftAttachments = async userDataPath => {
+  const dir = exports.getDraftPath(userDataPath);
+  const pattern = path.join(dir, '**', '*');
+
+  const files = await pify(glob)(pattern, { nodir: true });
+  return map(files, file => path.relative(dir, file));
+};
+
+exports.getBuiltInImages = async () => {
+  const dir = path.join(__dirname, '../images');
+  const pattern = path.join(dir, '**', '*.svg');
 
   const files = await pify(glob)(pattern, { nodir: true });
   return map(files, file => path.relative(dir, file));
@@ -51,6 +68,14 @@ exports.getTempPath = userDataPath => {
   return path.join(userDataPath, TEMP_PATH);
 };
 
+//      getDraftPath :: AbsolutePath -> AbsolutePath
+exports.getDraftPath = userDataPath => {
+  if (!isString(userDataPath)) {
+    throw new TypeError("'userDataPath' must be a string");
+  }
+  return path.join(userDataPath, DRAFT_PATH);
+};
+
 //      clearTempPath :: AbsolutePath -> AbsolutePath
 exports.clearTempPath = userDataPath => {
   const tempPath = exports.getTempPath(userDataPath);
@@ -77,6 +102,30 @@ exports.createReader = root => {
     }
     const buffer = await fse.readFile(normalized);
     return toArrayBuffer(buffer);
+  };
+};
+
+exports.createDoesExist = root => {
+  if (!isString(root)) {
+    throw new TypeError("'root' must be a path");
+  }
+
+  return async relativePath => {
+    if (!isString(relativePath)) {
+      throw new TypeError("'relativePath' must be a string");
+    }
+
+    const absolutePath = path.join(root, relativePath);
+    const normalized = path.normalize(absolutePath);
+    if (!normalized.startsWith(root)) {
+      throw new Error('Invalid relative path');
+    }
+    try {
+      await fse.access(normalized, fse.constants.F_OK);
+      return true;
+    } catch (error) {
+      return false;
+    }
   };
 };
 
@@ -202,6 +251,20 @@ exports.deleteAllStickers = async ({ userDataPath, stickers }) => {
   }
 
   console.log(`deleteAllStickers: deleted ${stickers.length} files`);
+};
+
+exports.deleteAllDraftAttachments = async ({ userDataPath, stickers }) => {
+  const deleteFromDisk = exports.createDeleter(
+    exports.getDraftPath(userDataPath)
+  );
+
+  for (let index = 0, max = stickers.length; index < max; index += 1) {
+    const file = stickers[index];
+    // eslint-disable-next-line no-await-in-loop
+    await deleteFromDisk(file);
+  }
+
+  console.log(`deleteAllDraftAttachments: deleted ${stickers.length} files`);
 };
 
 //      createName :: Unit -> IO String

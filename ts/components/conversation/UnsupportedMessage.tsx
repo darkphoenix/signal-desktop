@@ -18,12 +18,12 @@ export type PropsData = {
   contact: ContactType;
 };
 
-type PropsHousekeeping = {
-  i18n: LocalizerType;
-};
-
 export type PropsActions = {
   downloadNewVersion: () => unknown;
+};
+
+type PropsHousekeeping = {
+  i18n: LocalizerType;
 };
 
 type Props = PropsData & PropsHousekeeping & PropsActions;
@@ -71,15 +71,14 @@ export class UnsupportedMessage extends React.Component<Props> {
           />
         </div>
         {canProcessNow ? null : (
-          <div
-            role="button"
+          <button
             onClick={() => {
               downloadNewVersion();
             }}
             className="module-unsupported-message__button"
           >
             {i18n('Message--update-signal')}
-          </div>
+          </button>
         )}
       </div>
     );

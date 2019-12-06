@@ -14,7 +14,7 @@
     snippet="What's <<left>>going<<right>> on?"
     id="messageId1"
     conversationId="conversationId1"
-    receivedAt={Date.now() - 24 * 60 * 1000}
+    sentAt={Date.now() - 24 * 60 * 1000}
     onClick={result => console.log('onClick', result)}
     i18n={util.i18n}
   />
@@ -38,7 +38,7 @@
     snippet="What's <<left>>going<<right>> on?"
     id="messageId1"
     conversationId="conversationId1"
-    receivedAt={Date.now() - 4 * 60 * 1000}
+    sentAt={Date.now() - 4 * 60 * 1000}
     onClick={result => console.log('onClick', result)}
     i18n={util.i18n}
   />
@@ -61,7 +61,7 @@
     snippet="What's <<left>>going<<right>> on?"
     id="messageId1"
     conversationId="conversationId1"
-    receivedAt={Date.now() - 3 * 60 * 1000}
+    sentAt={Date.now() - 3 * 60 * 1000}
     onClick={result => console.log('onClick', result)}
     i18n={util.i18n}
   />
@@ -75,7 +75,48 @@
     snippet="How is everyone? <<left>>Going<<right>> well?"
     id="messageId2"
     conversationId="conversationId2"
-    receivedAt={Date.now() - 27 * 60 * 1000}
+    sentAt={Date.now() - 27 * 60 * 1000}
+    onClick={result => console.log('onClick', result)}
+    i18n={util.i18n}
+  />
+</util.LeftPaneContext>
+```
+
+#### Searching within conversation
+
+```jsx
+<util.LeftPaneContext theme={util.theme}>
+  <MessageSearchResult
+    isSearchingInConversation={true}
+    from={{
+      name: 'Someone 🔥',
+      phoneNumber: '(202) 555-0011',
+      avatarPath: util.gifObjectUrl,
+    }}
+    to={{
+      name: 'Everyone 🔥',
+    }}
+    snippet="What's <<left>>going<<right>> on?"
+    id="messageId1"
+    conversationId="conversationId1"
+    sentAt={Date.now() - 3 * 60 * 1000}
+    onClick={result => console.log('onClick', result)}
+    i18n={util.i18n}
+  />
+  <MessageSearchResult
+    isSearchingInConversation={true}
+    from={{
+      name: 'Someone 🔥',
+      phoneNumber: '(202) 555-0011',
+      avatarPath: util.gifObjectUrl,
+    }}
+    to={{
+      name: 'Everyone 🔥',
+    }}
+    snippet="How is everyone? <<left>>Going<<right>> well?"
+    id="messageId2"
+    conversationId="conversationId2"
+    sentAt={Date.now() - 27 * 60 * 1000}
     onClick={result => console.log('onClick', result)}
     i18n={util.i18n}
   />
@@ -96,7 +137,7 @@
     snippet="Tuesday: Ate two <<left>>apple<<right>>s"
     id="messageId1"
     conversationId="conversationId1"
-    receivedAt={Date.now() - 3 * 60 * 1000}
+    sentAt={Date.now() - 3 * 60 * 1000}
     onClick={result => console.log('onClick', result)}
     i18n={util.i18n}
   />
@@ -119,7 +160,7 @@
     snippet="<<left>>Just<<right>> a second"
     id="messageId1"
     conversationId="conversationId1"
-    receivedAt={Date.now() - 7 * 60 * 1000}
+    sentAt={Date.now() - 7 * 60 * 1000}
     onClick={result => console.log('onClick', result)}
     i18n={util.i18n}
   />
@@ -142,7 +183,7 @@
     snippet="I'm pretty <<left>>excited<<right>>!"
     id="messageId1"
     conversationId="conversationId1"
-    receivedAt={Date.now() - 30 * 60 * 1000}
+    sentAt={Date.now() - 30 * 60 * 1000}
     onClick={result => console.log('onClick', result)}
     i18n={util.i18n}
   />
@@ -166,7 +207,7 @@
     snippet="This is a really <<left>>detail<<right>>ed long line which will wrap and only be cut off after it gets to three lines. So maybe this will make it in as well?"
     id="messageId1"
     conversationId="conversationId1"
-    receivedAt={Date.now() - 17 * 60 * 1000}
+    sentAt={Date.now() - 17 * 60 * 1000}
     onClick={result => console.log('onClick', result)}
     i18n={util.i18n}
   />
@@ -183,7 +224,7 @@
     snippet="Okay, here are the <<left>>detail<<right>>s:\n\n1355 Ridge Way\nCode: 234\n\nI'm excited!"
     id="messageId2"
     conversationId="conversationId2"
-    receivedAt={Date.now() - 10 * 60 * 60 * 1000}
+    sentAt={Date.now() - 10 * 60 * 60 * 1000}
     onClick={result => console.log('onClick', result)}
     i18n={util.i18n}
   />

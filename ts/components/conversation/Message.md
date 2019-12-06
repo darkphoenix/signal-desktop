@@ -3,8 +3,8 @@
 Note that timestamp and status can be hidden with the `collapseMetadata` boolean property.
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       timestamp={Date.now()}
@@ -17,8 +17,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       onShowDetail={() => console.log('onShowDetail')}
       onDelete={() => console.log('onDelete')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       timestamp={Date.now()}
@@ -30,8 +30,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       onShowDetail={() => console.log('onShowDetail')}
       onDelete={() => console.log('onDelete')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       collapseMetadata
       direction="incoming"
@@ -44,8 +44,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       onShowDetail={() => console.log('onShowDetail')}
       onDelete={() => console.log('onDelete')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       timestamp={Date.now()}
@@ -57,8 +57,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       onShowDetail={() => console.log('onShowDetail')}
       onDelete={() => console.log('onDelete')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       authorColor="deep_orange"
@@ -71,8 +71,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       onShowDetail={() => console.log('onShowDetail')}
       onDelete={() => console.log('onDelete')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="outgoing"
       timestamp={Date.now()}
@@ -85,8 +85,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       onShowDetail={() => console.log('onShowDetail')}
       onDelete={() => console.log('onDelete')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="outgoing"
       timestamp={Date.now()}
@@ -99,8 +99,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       onShowDetail={() => console.log('onShowDetail')}
       onDelete={() => console.log('onDelete')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       collapseMetadata
       direction="outgoing"
@@ -113,8 +113,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       onShowDetail={() => console.log('onShowDetail')}
       onDelete={() => console.log('onDelete')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="outgoing"
       status="sent"
@@ -127,8 +127,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       onShowDetail={() => console.log('onShowDetail')}
       onDelete={() => console.log('onDelete')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="outgoing"
       status="read"
@@ -141,15 +141,15 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       onShowDetail={() => console.log('onShowDetail')}
       onDelete={() => console.log('onDelete')}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
 ### Status
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       direction="outgoing"
       status="sending"
@@ -158,8 +158,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       text="This is still sending."
       i18n={util.i18n}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="outgoing"
       status="sent"
@@ -168,8 +168,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       text="This has been successfully sent!"
       i18n={util.i18n}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="outgoing"
       status="delivered"
@@ -178,8 +178,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       text="This has been delivered!"
       i18n={util.i18n}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="outgoing"
       status="read"
@@ -188,8 +188,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       text="This has been read!"
       i18n={util.i18n}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="outgoing"
       status="error"
@@ -199,8 +199,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       i18n={util.i18n}
       onRetrySend={() => console.log('onRetrySend')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="outgoing"
       status="error"
@@ -218,8 +218,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       i18n={util.i18n}
       onRetrySend={() => console.log('onRetrySend')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="outgoing"
       status="sending"
@@ -228,8 +228,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       text="🔥"
       i18n={util.i18n}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="outgoing"
       status="sent"
@@ -238,8 +238,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       text="🔥"
       i18n={util.i18n}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="outgoing"
       status="delivered"
@@ -248,8 +248,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       text="🔥"
       i18n={util.i18n}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="outgoing"
       status="read"
@@ -258,8 +258,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       text="🔥"
       i18n={util.i18n}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="outgoing"
       status="error"
@@ -269,8 +269,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       i18n={util.i18n}
       onRetrySend={() => console.log('onRetrySend')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="outgoing"
       status="error"
@@ -288,8 +288,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       i18n={util.i18n}
       onRetrySend={() => console.log('onRetrySend')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       status="error"
@@ -298,8 +298,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       text="🔥"
       i18n={util.i18n}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       status="error"
@@ -316,15 +316,15 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       ]}
       i18n={util.i18n}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
 ### All colors
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       status="delivered"
@@ -333,8 +333,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       text="This is red"
       i18n={util.i18n}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       status="delivered"
@@ -343,8 +343,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       text="This is deep_orange"
       i18n={util.i18n}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       status="delivered"
@@ -353,8 +353,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       text="This is brown"
       i18n={util.i18n}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       status="delivered"
@@ -363,8 +363,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       text="This is pink"
       i18n={util.i18n}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       status="delivered"
@@ -373,8 +373,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       text="This is purple"
       i18n={util.i18n}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       status="delivered"
@@ -383,8 +383,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       text="This is indigo"
       i18n={util.i18n}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       status="delivered"
@@ -393,8 +393,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       text="This is blue"
       i18n={util.i18n}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       status="delivered"
@@ -403,8 +403,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       text="This is teal"
       i18n={util.i18n}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       status="delivered"
@@ -413,8 +413,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       text="This is green"
       i18n={util.i18n}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       status="delivered"
@@ -423,8 +423,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       text="This is light_green"
       i18n={util.i18n}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       status="delivered"
@@ -433,8 +433,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       text="This is blue_grey"
       i18n={util.i18n}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       status="delivered"
@@ -443,15 +443,15 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       text="This is grey"
       i18n={util.i18n}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
 ### Long data
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="purple"
       direction="incoming"
@@ -459,8 +459,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       timestamp={Date.now()}
       i18n={util.i18n}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="purple"
       direction="outgoing"
@@ -469,8 +469,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       timestamp={Date.now()}
       i18n={util.i18n}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="purple"
       direction="incoming"
@@ -488,8 +488,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       timestamp={Date.now()}
       i18n={util.i18n}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="purple"
       direction="outgoing"
@@ -508,15 +508,15 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       timestamp={Date.now()}
       i18n={util.i18n}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
 ### Pending long message download
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="purple"
       direction="incoming"
@@ -529,8 +529,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       timestamp={Date.now()}
       i18n={util.i18n}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="purple"
       direction="outgoing"
@@ -544,7 +544,7 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       timestamp={Date.now()}
       i18n={util.i18n}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
@@ -553,8 +553,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
 #### Image with caption
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="blue"
       direction="incoming"
@@ -573,8 +573,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       onDownload={() => console.log('onDownload')}
       onReply={() => console.log('onReply')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="blue"
       direction="outgoing"
@@ -594,8 +594,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       onDownload={() => console.log('onDownload')}
       onReply={() => console.log('onReply')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="blue"
       direction="incoming"
@@ -615,8 +615,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       onDownload={() => console.log('onDownload')}
       onReply={() => console.log('onReply')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="blue"
       direction="outgoing"
@@ -636,7 +636,7 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
       onDownload={() => console.log('onDownload')}
       onReply={() => console.log('onReply')}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
@@ -645,8 +645,8 @@ Note that timestamp and status can be hidden with the `collapseMetadata` boolean
 First, showing the metadata overlay on dark and light images, then a message with `collapseMetadata` set.
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -664,8 +664,8 @@ First, showing the metadata overlay on dark and light images, then a message wit
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -684,8 +684,8 @@ First, showing the metadata overlay on dark and light images, then a message wit
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -701,8 +701,8 @@ First, showing the metadata overlay on dark and light images, then a message wit
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -719,8 +719,8 @@ First, showing the metadata overlay on dark and light images, then a message wit
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -737,8 +737,8 @@ First, showing the metadata overlay on dark and light images, then a message wit
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -756,7 +756,7 @@ First, showing the metadata overlay on dark and light images, then a message wit
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
@@ -765,8 +765,8 @@ First, showing the metadata overlay on dark and light images, then a message wit
 Stickers have no background, but they have all the standard message bubble features.
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -785,8 +785,8 @@ Stickers have no background, but they have all the standard message bubble featu
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -806,8 +806,8 @@ Stickers have no background, but they have all the standard message bubble featu
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -824,8 +824,8 @@ Stickers have no background, but they have all the standard message bubble featu
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -843,8 +843,8 @@ Stickers have no background, but they have all the standard message bubble featu
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -863,8 +863,8 @@ Stickers have no background, but they have all the standard message bubble featu
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -883,8 +883,8 @@ Stickers have no background, but they have all the standard message bubble featu
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -903,7 +903,7 @@ Stickers have no background, but they have all the standard message bubble featu
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
@@ -912,8 +912,8 @@ Stickers have no background, but they have all the standard message bubble featu
 First set is in a 1:1 conversation, second set is in a group.
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -931,8 +931,8 @@ First set is in a 1:1 conversation, second set is in a group.
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -951,8 +951,8 @@ First set is in a 1:1 conversation, second set is in a group.
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -972,8 +972,8 @@ First set is in a 1:1 conversation, second set is in a group.
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -993,7 +993,7 @@ First set is in a 1:1 conversation, second set is in a group.
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
@@ -1002,8 +1002,8 @@ First set is in a 1:1 conversation, second set is in a group.
 A sticker with no attachments (what our selectors produce for a pending sticker) is not displayed at all.
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -1014,8 +1014,8 @@ A sticker with no attachments (what our selectors produce for a pending sticker)
       attachments={[]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -1027,8 +1027,8 @@ A sticker with no attachments (what our selectors produce for a pending sticker)
       attachments={[]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -1041,8 +1041,8 @@ A sticker with no attachments (what our selectors produce for a pending sticker)
       attachments={[]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -1055,15 +1055,15 @@ A sticker with no attachments (what our selectors produce for a pending sticker)
       attachments={[]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
 #### Multiple images
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -1085,37 +1085,8 @@ A sticker with no attachments (what our selectors produce for a pending sticker)
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
-    <Message
-      authorColor="green"
-      direction="incoming"
-      timestamp={Date.now()}
-      i18n={util.i18n}
-      attachments={[
-        {
-          url: util.gifObjectUrl,
-          contentType: 'image/gif',
-          width: 320,
-          height: 240,
-        },
-        {
-          url: util.gifObjectUrl,
-          contentType: 'image/gif',
-          width: 320,
-          height: 240,
-        },
-        {
-          url: util.gifObjectUrl,
-          contentType: 'image/gif',
-          width: 320,
-          height: 240,
-        },
-      ]}
-      showVisualAttachment={() => console.log('showVisualAttachment')}
-    />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -1140,17 +1111,11 @@ A sticker with no attachments (what our selectors produce for a pending sticker)
           width: 320,
           height: 240,
         },
-        {
-          url: util.gifObjectUrl,
-          contentType: 'image/gif',
-          width: 320,
-          height: 240,
-        },
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -1181,17 +1146,11 @@ A sticker with no attachments (what our selectors produce for a pending sticker)
           width: 320,
           height: 240,
         },
-        {
-          url: util.gifObjectUrl,
-          contentType: 'image/gif',
-          width: 320,
-          height: 240,
-        },
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -1228,6 +1187,47 @@ A sticker with no attachments (what our selectors produce for a pending sticker)
           width: 320,
           height: 240,
         },
+      ]}
+      showVisualAttachment={() => console.log('showVisualAttachment')}
+    />
+  </div>
+  <div className="module-message-container">
+    <Message
+      authorColor="green"
+      direction="incoming"
+      timestamp={Date.now()}
+      i18n={util.i18n}
+      attachments={[
+        {
+          url: util.gifObjectUrl,
+          contentType: 'image/gif',
+          width: 320,
+          height: 240,
+        },
+        {
+          url: util.gifObjectUrl,
+          contentType: 'image/gif',
+          width: 320,
+          height: 240,
+        },
+        {
+          url: util.gifObjectUrl,
+          contentType: 'image/gif',
+          width: 320,
+          height: 240,
+        },
+        {
+          url: util.gifObjectUrl,
+          contentType: 'image/gif',
+          width: 320,
+          height: 240,
+        },
+        {
+          url: util.gifObjectUrl,
+          contentType: 'image/gif',
+          width: 320,
+          height: 240,
+        },
         {
           url: util.gifObjectUrl,
           contentType: 'image/gif',
@@ -1237,15 +1237,15 @@ A sticker with no attachments (what our selectors produce for a pending sticker)
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
 #### Multiple images with caption
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -1268,8 +1268,8 @@ A sticker with no attachments (what our selectors produce for a pending sticker)
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -1298,8 +1298,8 @@ A sticker with no attachments (what our selectors produce for a pending sticker)
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -1334,8 +1334,8 @@ A sticker with no attachments (what our selectors produce for a pending sticker)
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -1376,8 +1376,8 @@ A sticker with no attachments (what our selectors produce for a pending sticker)
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -1424,7 +1424,7 @@ A sticker with no attachments (what our selectors produce for a pending sticker)
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
@@ -1433,8 +1433,8 @@ A sticker with no attachments (what our selectors produce for a pending sticker)
 Note that the delivered indicator is always Signal Blue, not the conversation color.
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       direction="outgoing"
       status="sending"
@@ -1451,8 +1451,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="outgoing"
       status="sent"
@@ -1469,8 +1469,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="outgoing"
       status="delivered"
@@ -1487,8 +1487,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="outgoing"
       status="read"
@@ -1505,15 +1505,15 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
 #### Pending images
 
 ```
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+    <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -1530,8 +1530,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+    </div>
+    <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -1549,8 +1549,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+    </div>
+    <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -1579,8 +1579,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+    </div>
+    <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -1610,15 +1610,15 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
+    </div>
   </util.ConversationContext>
 ```
 
 #### Image with portrait aspect ratio
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="purple"
       direction="incoming"
@@ -1634,8 +1634,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="purple"
       direction="outgoing"
@@ -1652,8 +1652,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="purple"
       direction="incoming"
@@ -1670,8 +1670,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="purple"
       direction="outgoing"
@@ -1688,15 +1688,15 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
 #### Image with portrait aspect ratio and caption
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       text="This is an odd yellow bar. Cool, huh?"
@@ -1713,8 +1713,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -1732,8 +1732,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       text="This is an odd yellow bar. Cool, huh?"
@@ -1751,8 +1751,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -1771,8 +1771,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       text="All notifications"
@@ -1791,8 +1791,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       expirationLength={5 * 60 * 1000}
       expirationTimestamp={Date.now() + 5 * 60 * 1000}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -1812,15 +1812,15 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       expirationLength={5 * 60 * 1000}
       expirationTimestamp={Date.now() + 5 * 60 * 1000}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
 #### Image with landscape aspect ratio
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -1836,8 +1836,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -1854,8 +1854,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -1872,8 +1872,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -1890,15 +1890,15 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
 #### Image with landscape aspect ratio and caption
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       text="An interesting horizontal bar. It's art."
@@ -1915,8 +1915,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -1934,8 +1934,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       text="An interesting horizontal bar. It's art."
@@ -1953,8 +1953,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -1972,15 +1972,15 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
 #### Video with caption
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       text="Beautiful, isn't it?"
@@ -1999,8 +1999,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -2020,8 +2020,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       text="Beautiful, isn't it?"
@@ -2043,8 +2043,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -2066,15 +2066,15 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
 #### Video
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -2095,8 +2095,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -2117,8 +2117,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -2140,8 +2140,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -2163,15 +2163,15 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
 #### Missing images and videos
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -2190,8 +2190,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -2210,8 +2210,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       text="Did something go wrong?"
       authorColor="green"
@@ -2231,8 +2231,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       text="Did something go wrong?"
@@ -2252,8 +2252,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -2274,8 +2274,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -2296,8 +2296,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       text="Did something go wrong?"
       authorColor="green"
@@ -2319,8 +2319,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       text="Did something go wrong?"
@@ -2342,15 +2342,15 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
 #### Broken source URL images and videos
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -2369,8 +2369,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       text="Did something go wrong?"
@@ -2390,8 +2390,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -2412,8 +2412,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -2434,15 +2434,15 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
 #### Image/video which is too big
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -2461,8 +2461,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -2481,8 +2481,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -2503,8 +2503,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -2525,15 +2525,15 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
 #### Image/video missing height/width
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -2550,8 +2550,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -2569,8 +2569,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -2592,8 +2592,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -2612,15 +2612,15 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
 #### Audio with caption
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       text="This is a nice song"
@@ -2635,8 +2635,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -2652,8 +2652,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       text="This is a nice song"
@@ -2669,8 +2669,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -2686,15 +2686,15 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
 #### Audio
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -2708,8 +2708,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -2724,8 +2724,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -2740,8 +2740,8 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -2756,7 +2756,7 @@ Note that the delivered indicator is always Signal Blue, not the conversation co
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
@@ -2767,8 +2767,8 @@ Voice notes are not shown any differently from audio attachments.
 #### Other file type with caption
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -2785,8 +2785,8 @@ Voice notes are not shown any differently from audio attachments.
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -2804,8 +2804,8 @@ Voice notes are not shown any differently from audio attachments.
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -2823,8 +2823,8 @@ Voice notes are not shown any differently from audio attachments.
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -2842,8 +2842,8 @@ Voice notes are not shown any differently from audio attachments.
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -2862,8 +2862,8 @@ Voice notes are not shown any differently from audio attachments.
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -2881,8 +2881,8 @@ Voice notes are not shown any differently from audio attachments.
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -2899,15 +2899,15 @@ Voice notes are not shown any differently from audio attachments.
         },
       ]}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
 #### Other file type
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -2923,8 +2923,8 @@ Voice notes are not shown any differently from audio attachments.
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -2941,8 +2941,8 @@ Voice notes are not shown any differently from audio attachments.
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -2959,8 +2959,8 @@ Voice notes are not shown any differently from audio attachments.
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -2977,15 +2977,15 @@ Voice notes are not shown any differently from audio attachments.
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
 #### Other file type pending
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -3002,8 +3002,8 @@ Voice notes are not shown any differently from audio attachments.
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -3021,8 +3021,8 @@ Voice notes are not shown any differently from audio attachments.
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -3038,8 +3038,8 @@ Voice notes are not shown any differently from audio attachments.
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -3055,15 +3055,15 @@ Voice notes are not shown any differently from audio attachments.
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
 #### Dangerous file type
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -3081,8 +3081,8 @@ Voice notes are not shown any differently from audio attachments.
         console.log('showVisualAttachment - isDangerous:', isDangerous)
       }
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -3101,15 +3101,15 @@ Voice notes are not shown any differently from audio attachments.
         console.log('showVisualAttachment - isDangerous:', isDangerous)
       }
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
 #### Link previews, full-size image
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -3130,8 +3130,8 @@ Voice notes are not shown any differently from audio attachments.
       ]}
       onClickLinkPreview={url => console.log('onClickLinkPreview', url)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -3153,8 +3153,8 @@ Voice notes are not shown any differently from audio attachments.
       ]}
       onClickLinkPreview={url => console.log('onClickLinkPreview', url)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -3181,8 +3181,8 @@ Voice notes are not shown any differently from audio attachments.
       ]}
       onClickLinkPreview={url => console.log('onClickLinkPreview', url)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -3210,7 +3210,7 @@ Voice notes are not shown any differently from audio attachments.
       ]}
       onClickLinkPreview={url => console.log('onClickLinkPreview', url)}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
@@ -3219,19 +3219,19 @@ Voice notes are not shown any differently from audio attachments.
 Sticker link previews are forced to use the small link preview form, no matter the image size.
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
       i18n={util.i18n}
       timestamp={Date.now()}
-      text="Pretty sweet link: https://signal.org/addsticker/#pack_id=11111"
+      text="Pretty sweet link: https://signal.art/addsticker/#pack_id=11111"
       previews={[
         {
           title: 'This is a really sweet post',
           isStickerPack: true,
-          domain: 'instagram.com',
+          domain: 'signal.art',
           image: {
             url: util.squareStickerObjectUrl,
             contentType: 'image/png',
@@ -3242,20 +3242,20 @@ Sticker link previews are forced to use the small link preview form, no matter t
       ]}
       onClickLinkPreview={url => console.log('onClickLinkPreview', url)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
       i18n={util.i18n}
       timestamp={Date.now()}
       status="sent"
-      text="Pretty sweet link: https://signal.org/addsticker/#pack_id=11111"
+      text="Pretty sweet link: https://signal.art/addsticker/#pack_id=11111"
       previews={[
         {
           title: 'This is a really sweet post',
           isStickerPack: true,
-          domain: 'signal.org',
+          domain: 'signal.art',
           image: {
             url: util.squareStickerObjectUrl,
             contentType: 'image/png',
@@ -3266,15 +3266,15 @@ Sticker link previews are forced to use the small link preview form, no matter t
       ]}
       onClickLinkPreview={url => console.log('onClickLinkPreview', url)}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
 #### Link previews, small image
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -3295,8 +3295,8 @@ Sticker link previews are forced to use the small link preview form, no matter t
       ]}
       onClickLinkPreview={url => console.log('onClickLinkPreview', url)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -3318,8 +3318,8 @@ Sticker link previews are forced to use the small link preview form, no matter t
       ]}
       onClickLinkPreview={url => console.log('onClickLinkPreview', url)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -3347,8 +3347,8 @@ Sticker link previews are forced to use the small link preview form, no matter t
       ]}
       onClickLinkPreview={url => console.log('onClickLinkPreview', url)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -3377,15 +3377,15 @@ Sticker link previews are forced to use the small link preview form, no matter t
       ]}
       onClickLinkPreview={url => console.log('onClickLinkPreview', url)}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
 #### Link previews with pending image
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -3406,8 +3406,8 @@ Sticker link previews are forced to use the small link preview form, no matter t
       ]}
       onClickLinkPreview={url => console.log('onClickLinkPreview', url)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -3429,8 +3429,8 @@ Sticker link previews are forced to use the small link preview form, no matter t
       ]}
       onClickLinkPreview={url => console.log('onClickLinkPreview', url)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -3451,8 +3451,8 @@ Sticker link previews are forced to use the small link preview form, no matter t
       ]}
       onClickLinkPreview={url => console.log('onClickLinkPreview', url)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -3474,15 +3474,15 @@ Sticker link previews are forced to use the small link preview form, no matter t
       ]}
       onClickLinkPreview={url => console.log('onClickLinkPreview', url)}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
 #### Link previews, no image
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -3497,8 +3497,8 @@ Sticker link previews are forced to use the small link preview form, no matter t
       ]}
       onClickLinkPreview={url => console.log('onClickLinkPreview', url)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -3514,8 +3514,8 @@ Sticker link previews are forced to use the small link preview form, no matter t
       ]}
       onClickLinkPreview={url => console.log('onClickLinkPreview', url)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="incoming"
@@ -3537,8 +3537,8 @@ Sticker link previews are forced to use the small link preview form, no matter t
       ]}
       onClickLinkPreview={url => console.log('onClickLinkPreview', url)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       direction="outgoing"
@@ -3561,15 +3561,15 @@ Sticker link previews are forced to use the small link preview form, no matter t
       ]}
       onClickLinkPreview={url => console.log('onClickLinkPreview', url)}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
 ### Tap to view
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       timestamp={Date.now()}
@@ -3594,8 +3594,8 @@ Sticker link previews are forced to use the small link preview form, no matter t
       }
       authorAvatarPath={util.gifObjectUrl}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       timestamp={Date.now()}
@@ -3618,8 +3618,8 @@ Sticker link previews are forced to use the small link preview form, no matter t
         console.log('displayTapToViewMessage', args)
       }
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       timestamp={Date.now()}
@@ -3644,8 +3644,8 @@ Sticker link previews are forced to use the small link preview form, no matter t
       }
       authorAvatarPath={util.gifObjectUrl}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       timestamp={Date.now()}
@@ -3670,8 +3670,8 @@ Sticker link previews are forced to use the small link preview form, no matter t
         console.log('displayTapToViewMessage', args)
       }
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       timestamp={Date.now()}
@@ -3697,8 +3697,8 @@ Sticker link previews are forced to use the small link preview form, no matter t
         console.log('displayTapToViewMessage', args)
       }
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       timestamp={Date.now()}
@@ -3722,8 +3722,8 @@ Sticker link previews are forced to use the small link preview form, no matter t
         console.log('displayTapToViewMessage', args)
       }
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="outgoing"
       authorColor="red"
@@ -3749,8 +3749,8 @@ Sticker link previews are forced to use the small link preview form, no matter t
       }
       authorAvatarPath={util.gifObjectUrl}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="outgoing"
       authorColor="green"
@@ -3775,8 +3775,8 @@ Sticker link previews are forced to use the small link preview form, no matter t
       }
       authorAvatarPath={util.gifObjectUrl}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="outgoing"
       authorColor="red"
@@ -3802,8 +3802,8 @@ Sticker link previews are forced to use the small link preview form, no matter t
       }
       authorAvatarPath={util.gifObjectUrl}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="outgoing"
       authorColor="green"
@@ -3828,8 +3828,8 @@ Sticker link previews are forced to use the small link preview form, no matter t
       }
       authorAvatarPath={util.gifObjectUrl}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       timestamp={Date.now()}
@@ -3854,8 +3854,8 @@ Sticker link previews are forced to use the small link preview form, no matter t
       }
       authorAvatarPath={util.gifObjectUrl}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       timestamp={Date.now()}
@@ -3879,8 +3879,8 @@ Sticker link previews are forced to use the small link preview form, no matter t
         console.log('displayTapToViewMessage', args)
       }
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="outgoing"
       authorColor="red"
@@ -3906,8 +3906,8 @@ Sticker link previews are forced to use the small link preview form, no matter t
       }
       authorAvatarPath={util.gifObjectUrl}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="outgoing"
       authorColor="red"
@@ -3933,8 +3933,8 @@ Sticker link previews are forced to use the small link preview form, no matter t
       }
       authorAvatarPath={util.gifObjectUrl}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       authorColor="red"
@@ -3956,8 +3956,8 @@ Sticker link previews are forced to use the small link preview form, no matter t
       }
       authorAvatarPath={util.gifObjectUrl}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       authorColor="red"
@@ -3975,8 +3975,8 @@ Sticker link previews are forced to use the small link preview form, no matter t
       }
       authorAvatarPath={util.gifObjectUrl}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       authorColor="red"
@@ -3995,7 +3995,7 @@ Sticker link previews are forced to use the small link preview form, no matter t
       }
       authorAvatarPath={util.gifObjectUrl}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```
 
@@ -4004,8 +4004,8 @@ Sticker link previews are forced to use the small link preview form, no matter t
 Note that the author avatar goes away if `collapseMetadata` is set.
 
 ```jsx
-<util.ConversationContext theme={util.theme} ios={util.ios}>
-  <li>
+<util.ConversationContext theme={util.theme} ios={util.ios} mode={util.mode}>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       timestamp={Date.now()}
@@ -4016,8 +4016,8 @@ Note that the author avatar goes away if `collapseMetadata` is set.
       i18n={util.i18n}
       authorAvatarPath={util.gifObjectUrl}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       collapseMetadata={true}
@@ -4029,8 +4029,8 @@ Note that the author avatar goes away if `collapseMetadata` is set.
       i18n={util.i18n}
       authorAvatarPath={util.gifObjectUrl}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       timestamp={Date.now()}
@@ -4042,8 +4042,8 @@ Note that the author avatar goes away if `collapseMetadata` is set.
       i18n={util.i18n}
       authorAvatarPath={util.gifObjectUrl}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       timestamp={Date.now()}
@@ -4056,8 +4056,8 @@ Note that the author avatar goes away if `collapseMetadata` is set.
       i18n={util.i18n}
       authorAvatarPath={util.gifObjectUrl}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       timestamp={Date.now()}
@@ -4070,8 +4070,8 @@ Note that the author avatar goes away if `collapseMetadata` is set.
       i18n={util.i18n}
       authorAvatarPath={util.gifObjectUrl}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       authorName="Mr. Fire"
@@ -4090,8 +4090,8 @@ Note that the author avatar goes away if `collapseMetadata` is set.
       showVisualAttachment={() => console.log('showVisualAttachment')}
       authorAvatarPath={util.gifObjectUrl}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       conversationType="group"
@@ -4114,8 +4114,8 @@ Note that the author avatar goes away if `collapseMetadata` is set.
       showVisualAttachment={() => console.log('showVisualAttachment')}
       authorAvatarPath={util.gifObjectUrl}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       conversationType="group"
@@ -4132,8 +4132,8 @@ Note that the author avatar goes away if `collapseMetadata` is set.
       showVisualAttachment={() => console.log('showVisualAttachment')}
       authorAvatarPath={util.gifObjectUrl}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       conversationType="group"
@@ -4152,8 +4152,8 @@ Note that the author avatar goes away if `collapseMetadata` is set.
       ]}
       showVisualAttachment={() => console.log('showVisualAttachment')}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       timestamp={Date.now()}
@@ -4167,8 +4167,8 @@ Note that the author avatar goes away if `collapseMetadata` is set.
       i18n={util.i18n}
       authorAvatarPath={util.gifObjectUrl}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       timestamp={Date.now()}
@@ -4178,8 +4178,8 @@ Note that the author avatar goes away if `collapseMetadata` is set.
       authorColor="grey"
       i18n={util.i18n}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="incoming"
       timestamp={Date.now()}
@@ -4191,8 +4191,8 @@ Note that the author avatar goes away if `collapseMetadata` is set.
       text="Contact and color, but no avatar"
       i18n={util.i18n}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       authorName="Mr. Fire"
@@ -4215,8 +4215,8 @@ Note that the author avatar goes away if `collapseMetadata` is set.
       ]}
       onClickLinkPreview={url => console.log('onClickLinkPreview', url)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       authorColor="green"
       authorName="Mr. Fire"
@@ -4233,8 +4233,8 @@ Note that the author avatar goes away if `collapseMetadata` is set.
       ]}
       onClickLinkPreview={url => console.log('onClickLinkPreview', url)}
     />
-  </li>
-  <li>
+  </div>
+  <div className="module-message-container">
     <Message
       direction="outgoing"
       authorColor="pink"
@@ -4246,6 +4246,6 @@ Note that the author avatar goes away if `collapseMetadata` is set.
       i18n={util.i18n}
       authorAvatarPath={util.gifObjectUrl}
     />
-  </li>
+  </div>
 </util.ConversationContext>
 ```

@@ -16,7 +16,7 @@ import {
 } from 'draft-js';
 import Measure, { ContentRect } from 'react-measure';
 import { Manager, Popper, Reference } from 'react-popper';
-import { head, noop, trimEnd } from 'lodash';
+import { get, head, noop, trimEnd } from 'lodash';
 import classNames from 'classnames';
 import emojiRegex from 'emoji-regex';
 import { Emoji } from './emoji/Emoji';
@@ -29,17 +29,22 @@ import {
 } from './emoji/lib';
 import { LocalizerType } from '../types/Util';
 
+const MAX_LENGTH = 64 * 1024;
 const colonsRegex = /(?:^|\s):[a-z0-9-_+]+:?/gi;
+const triggerEmojiRegex = /^(?:[-+]\d|[a-z]{2})/i;
 
 export type Props = {
   readonly i18n: LocalizerType;
   readonly disabled?: boolean;
+  readonly large?: boolean;
   readonly editorRef?: React.RefObject<Editor>;
   readonly inputApi?: React.MutableRefObject<InputApi | undefined>;
   readonly skinTone?: EmojiPickDataType['skinTone'];
+  readonly startingText?: string;
   onDirtyChange?(dirty: boolean): unknown;
   onEditorStateChange?(messageText: string, caretLocation: number): unknown;
   onEditorSizeChange?(rect: ContentRect): unknown;
+  onTextTooLong(): unknown;
   onPickEmoji(o: EmojiPickDataType): unknown;
   onSubmit(message: string): unknown;
 };
@@ -75,17 +80,74 @@ function getTrimmedMatchAtIndex(str: string, index: number, pattern: RegExp) {
   return null;
 }
 
-function getWordAtIndex(str: string, index: number) {
+function getLengthOfSelectedText(state: EditorState): number {
+  const currentSelection = state.getSelection();
+  let length = 0;
+
+  const currentContent = state.getCurrentContent();
+  const startKey = currentSelection.getStartKey();
+  const endKey = currentSelection.getEndKey();
+  const startBlock = currentContent.getBlockForKey(startKey);
+  const isStartAndEndBlockAreTheSame = startKey === endKey;
+  const startBlockTextLength = startBlock.getLength();
+  const startSelectedTextLength =
+    startBlockTextLength - currentSelection.getStartOffset();
+  const endSelectedTextLength = currentSelection.getEndOffset();
+  const keyAfterEnd = currentContent.getKeyAfter(endKey);
+
+  if (isStartAndEndBlockAreTheSame) {
+    length +=
+      currentSelection.getEndOffset() - currentSelection.getStartOffset();
+  } else {
+    let currentKey = startKey;
+
+    while (currentKey && currentKey !== keyAfterEnd) {
+      if (currentKey === startKey) {
+        length += startSelectedTextLength + 1;
+      } else if (currentKey === endKey) {
+        length += endSelectedTextLength;
+      } else {
+        length += currentContent.getBlockForKey(currentKey).getLength() + 1;
+      }
+
+      currentKey = currentContent.getKeyAfter(currentKey);
+    }
+  }
+
+  return length;
+}
+
+function getWordAtIndex(
+  str: string,
+  index: number
+): { start: number; end: number; word: string } {
   const start = str
     .slice(0, index + 1)
     .replace(/\s+$/, '')
     .search(/\S+$/);
-  const end = str.slice(index).search(/(?:\s|$)/) + index;
+
+  let end =
+    str
+      .slice(index)
+      .split('')
+      .findIndex(c => /[^a-z0-9-_]/i.test(c) || c === ':') + index;
+
+  const endChar = str[end];
+
+  if (/\w|:/.test(endChar)) {
+    end += 1;
+  }
+
+  const word = str.slice(start, end);
+
+  if (word === ':') {
+    return getWordAtIndex(str, index + 1);
+  }
 
   return {
     start,
     end,
-    word: str.slice(start, end),
+    word,
   };
 }
 
@@ -140,21 +202,43 @@ const combineRefs = createSelector(
   }
 );
 
+const getInitialEditorState = (startingText?: string) => {
+  if (!startingText) {
+    return EditorState.createEmpty(compositeDecorator);
+  }
+
+  const end = startingText.length;
+  const state = EditorState.createWithContent(
+    ContentState.createFromText(startingText),
+    compositeDecorator
+  );
+  const selection = state.getSelection();
+  const selectionAtEnd = selection.merge({
+    anchorOffset: end,
+    focusOffset: end,
+  }) as SelectionState;
+
+  return EditorState.forceSelection(state, selectionAtEnd);
+};
+
 // tslint:disable-next-line max-func-body-length
 export const CompositionInput = ({
   i18n,
   disabled,
+  large,
   editorRef,
   inputApi,
   onDirtyChange,
   onEditorStateChange,
   onEditorSizeChange,
+  onTextTooLong,
   onPickEmoji,
   onSubmit,
   skinTone,
+  startingText,
 }: Props) => {
   const [editorRenderState, setEditorRenderState] = React.useState(
-    EditorState.createEmpty(compositeDecorator)
+    getInitialEditorState(startingText)
   );
   const [searchText, setSearchText] = React.useState<string>('');
   const [emojiResults, setEmojiResults] = React.useState<Array<EmojiData>>([]);
@@ -181,24 +265,27 @@ export const CompositionInput = ({
 
   const updateExternalStateListeners = React.useCallback(
     (newState: EditorState) => {
-      const plainText = newState.getCurrentContent().getPlainText();
-      const currentBlockKey = newState.getSelection().getStartKey();
-      const currentBlockIndex = editorStateRef.current
+      const plainText = newState
+        .getCurrentContent()
+        .getPlainText()
+        .trim();
+      const cursorBlockKey = newState.getSelection().getStartKey();
+      const cursorBlockIndex = editorStateRef.current
         .getCurrentContent()
         .getBlockMap()
         .keySeq()
-        .findIndex(key => key === currentBlockKey);
+        .findIndex(key => key === cursorBlockKey);
       const caretLocation = newState
         .getCurrentContent()
         .getBlockMap()
         .valueSeq()
         .toArray()
-        .reduce((sum: number, block: ContentBlock, index: number) => {
-          if (currentBlockIndex < index) {
+        .reduce((sum: number, block: ContentBlock, currentIndex: number) => {
+          if (currentIndex < cursorBlockIndex) {
             return sum + block.getText().length + 1; // +1 for newline
           }
 
-          if (currentBlockIndex === index) {
+          if (currentIndex === cursorBlockIndex) {
             return sum + newState.getSelection().getStartOffset();
           }
 
@@ -212,6 +299,7 @@ export const CompositionInput = ({
           onDirtyChange(isDirty);
         }
       }
+
       if (onEditorStateChange) {
         onEditorStateChange(plainText, caretLocation);
       }
@@ -252,7 +340,7 @@ export const CompositionInput = ({
         } else {
           resetEmojiResults();
         }
-      } else if (newSearchText.length >= 2 && focusRef.current) {
+      } else if (triggerEmojiRegex.test(newSearchText) && focusRef.current) {
         setEmojiResults(search(newSearchText, 10));
         setSearchText(newSearchText);
         setEmojiResultsIndex(0);
@@ -273,6 +361,51 @@ export const CompositionInput = ({
     ]
   );
 
+  const handleBeforeInput = React.useCallback(
+    (): DraftHandleValue => {
+      if (!editorStateRef.current) {
+        return 'not-handled';
+      }
+
+      const editorState = editorStateRef.current;
+      const plainText = editorState.getCurrentContent().getPlainText();
+      const selectedTextLength = getLengthOfSelectedText(editorState);
+
+      if (plainText.length - selectedTextLength > MAX_LENGTH - 1) {
+        onTextTooLong();
+
+        return 'handled';
+      }
+
+      return 'not-handled';
+    },
+    [onTextTooLong, editorStateRef]
+  );
+
+  const handlePastedText = React.useCallback(
+    (pastedText: string): DraftHandleValue => {
+      if (!editorStateRef.current) {
+        return 'not-handled';
+      }
+
+      const editorState = editorStateRef.current;
+      const plainText = editorState.getCurrentContent().getPlainText();
+      const selectedTextLength = getLengthOfSelectedText(editorState);
+
+      if (
+        plainText.length + pastedText.length - selectedTextLength >
+        MAX_LENGTH
+      ) {
+        onTextTooLong();
+
+        return 'handled';
+      }
+
+      return 'not-handled';
+    },
+    [onTextTooLong, editorStateRef]
+  );
+
   const resetEditorState = React.useCallback(
     () => {
       const newEmptyState = EditorState.createEmpty(compositeDecorator);
@@ -287,7 +420,8 @@ export const CompositionInput = ({
       const { current: state } = editorStateRef;
       const text = state.getCurrentContent().getPlainText();
       const emojidText = replaceColons(text);
-      onSubmit(emojidText);
+      const trimmedText = emojidText.trim();
+      onSubmit(trimmedText);
     },
     [editorStateRef, onSubmit]
   );
@@ -389,24 +523,18 @@ export const CompositionInput = ({
         .getLastCreatedEntityKey();
       const word = getWordAtCaret();
 
-      let newContent = replaceWord
-        ? Modifier.replaceText(
-            oldContent,
-            selection.merge({
+      let newContent = Modifier.replaceText(
+        oldContent,
+        replaceWord
+          ? (selection.merge({
               anchorOffset: word.start,
               focusOffset: word.end,
-            }) as SelectionState,
-            emojiContent,
-            undefined,
-            emojiEntityKey
-          )
-        : Modifier.insertText(
-            oldContent,
-            selection,
-            emojiContent,
-            undefined,
-            emojiEntityKey
-          );
+            }) as SelectionState)
+          : selection,
+        emojiContent,
+        undefined,
+        emojiEntityKey
+      );
 
       const afterSelection = newContent.getSelectionAfter();
 
@@ -523,6 +651,7 @@ export const CompositionInput = ({
   );
 
   const editorKeybindingFn = React.useCallback(
+    // tslint:disable-next-line cyclomatic-complexity
     (e: React.KeyboardEvent): CompositionInputEditorCommand | null => {
       if (e.key === 'Enter' && emojiResults.length > 0) {
         e.preventDefault();
@@ -531,6 +660,10 @@ export const CompositionInput = ({
       }
 
       if (e.key === 'Enter' && !e.shiftKey) {
+        if (large && !(e.ctrlKey || e.metaKey)) {
+          return getDefaultKeyBinding(e);
+        }
+
         e.preventDefault();
 
         return 'submit';
@@ -548,9 +681,35 @@ export const CompositionInput = ({
         return 'prev-emoji';
       }
 
+      // Get rid of default draft.js ctrl-m binding which interferes with Windows minimize
+      if (e.key === 'm' && e.ctrlKey) {
+        return null;
+      }
+
+      if (get(window, 'platform') === 'linux') {
+        // Get rid of default draft.js shift-del binding which interferes with Linux cut
+        if (e.key === 'Delete' && e.shiftKey) {
+          return null;
+        }
+      }
+
+      // Get rid of Ctrl-Shift-M, which by default adds a newline
+      if ((e.key === 'm' || e.key === 'M') && e.shiftKey && e.ctrlKey) {
+        e.preventDefault();
+
+        return null;
+      }
+
+      // Get rid of Ctrl-/, which on GNOME is bound to 'select all'
+      if (e.key === '/' && !e.shiftKey && e.ctrlKey) {
+        e.preventDefault();
+
+        return null;
+      }
+
       return getDefaultKeyBinding(e);
     },
-    [emojiResults]
+    [emojiResults, large]
   );
 
   // Create popper root
@@ -635,7 +794,14 @@ export const CompositionInput = ({
                 className="module-composition-input__input"
                 ref={combineRefs(popperRef, measureRef, rootElRef)}
               >
-                <div className="module-composition-input__input__scroller">
+                <div
+                  className={classNames(
+                    'module-composition-input__input__scroller',
+                    large
+                      ? 'module-composition-input__input__scroller--large'
+                      : null
+                  )}
+                >
                   <Editor
                     ref={editorRef}
                     editorState={editorRenderState}
@@ -646,6 +812,8 @@ export const CompositionInput = ({
                     onEscape={handleEscapeKey}
                     onTab={onTab}
                     handleKeyCommand={handleEditorCommand}
+                    handleBeforeInput={handleBeforeInput}
+                    handlePastedText={handlePastedText}
                     keyBindingFn={editorKeybindingFn}
                     spellCheck={true}
                     stripPastedStyles={true}

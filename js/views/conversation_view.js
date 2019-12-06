@@ -1,9 +1,11 @@
 /* global
   $,
   _,
-  ConversationController
+  ConversationController,
   extension,
   i18n,
+  loadImage,
+  MessageController,
   Signal,
   storage,
   textsecure,
@@ -15,14 +17,25 @@
   'use strict';
 
   window.Whisper = window.Whisper || {};
-  const { Message } = window.Signal.Types;
+  const { Message, MIME, VisualAttachment } = window.Signal.Types;
   const {
     upgradeMessageSchema,
     getAbsoluteAttachmentPath,
+    getAbsoluteDraftPath,
     copyIntoTempDirectory,
     getAbsoluteTempPath,
+    deleteDraftFile,
     deleteTempFile,
+    readDraftData,
+    writeNewDraftData,
   } = window.Signal.Migrations;
+  const {
+    getOlderMessagesByConversation,
+    getMessageMetricsForConversation,
+    getMessageById,
+    getMessagesBySentAt,
+    getNewerMessagesByConversation,
+  } = window.Signal.Data;
 
   Whisper.ExpiredToast = Whisper.ToastView.extend({
     render_attributes() {
@@ -64,12 +77,51 @@
       return { toastMessage: i18n('voiceNoteMustBeOnlyAttachment') };
     },
   });
+  Whisper.ConversationArchivedToast = Whisper.ToastView.extend({
+    render_attributes() {
+      return { toastMessage: i18n('conversationArchived') };
+    },
+  });
+  Whisper.ConversationUnarchivedToast = Whisper.ToastView.extend({
+    render_attributes() {
+      return { toastMessage: i18n('conversationReturnedToInbox') };
+    },
+  });
 
   const MAX_MESSAGE_BODY_LENGTH = 64 * 1024;
   Whisper.MessageBodyTooLongToast = Whisper.ToastView.extend({
     render_attributes() {
       return { toastMessage: i18n('messageBodyTooLong') };
     },
+  });
+
+  Whisper.FileSizeToast = Whisper.ToastView.extend({
+    templateName: 'file-size-modal',
+    render_attributes() {
+      return {
+        'file-size-warning': i18n('fileSizeWarning'),
+        limit: this.model.limit,
+        units: this.model.units,
+      };
+    },
+  });
+  Whisper.UnableToLoadToast = Whisper.ToastView.extend({
+    render_attributes() {
+      return { toastMessage: i18n('unableToLoadAttachment') };
+    },
+  });
+
+  Whisper.DangerousFileTypeToast = Whisper.ToastView.extend({
+    template: i18n('dangerousFileType'),
+  });
+  Whisper.OneNonImageAtATimeToast = Whisper.ToastView.extend({
+    template: i18n('oneNonImageAtATimeToast'),
+  });
+  Whisper.CannotMixImageAndNonImageAttachmentsToast = Whisper.ToastView.extend({
+    template: i18n('cannotMixImageAdnNonImageAttachments'),
+  });
+  Whisper.MaxAttachmentsToast = Whisper.ToastView.extend({
+    template: i18n('maximumAttachments'),
   });
 
   Whisper.ConversationLoadingScreen = Whisper.View.extend({
@@ -91,14 +143,41 @@
       };
     },
     initialize(options) {
+      // Events on Conversation model
       this.listenTo(this.model, 'destroy', this.stopListening);
       this.listenTo(this.model, 'change:verified', this.onVerifiedChange);
       this.listenTo(this.model, 'newmessage', this.addMessage);
       this.listenTo(this.model, 'opened', this.onOpened);
       this.listenTo(this.model, 'backgrounded', this.resetEmojiResults);
-      this.listenTo(this.model, 'prune', this.onPrune);
-      this.listenTo(this.model, 'unload', () => this.unload('model trigger'));
-      this.listenTo(this.model, 'typing-update', this.renderTypingBubble);
+      this.listenTo(this.model, 'scroll-to-message', this.scrollToMessage);
+      this.listenTo(this.model, 'unload', reason =>
+        this.unload(`model trigger - ${reason}`)
+      );
+      this.listenTo(this.model, 'focus-composer', this.focusMessageField);
+      this.listenTo(this.model, 'open-all-media', this.showAllMedia);
+      this.listenTo(this.model, 'begin-recording', this.captureAudio);
+      this.listenTo(this.model, 'attach-file', this.onChooseAttachment);
+      this.listenTo(this.model, 'escape-pressed', this.resetPanel);
+      this.listenTo(this.model, 'show-message-details', this.showMessageDetail);
+      this.listenTo(this.model, 'toggle-reply', messageId => {
+        const target = this.quote || !messageId ? null : messageId;
+        this.setQuoteMessage(target);
+      });
+      this.listenTo(
+        this.model,
+        'save-attachment',
+        this.downloadAttachmentWrapper
+      );
+      this.listenTo(this.model, 'delete-message', this.deleteMessage);
+      this.listenTo(this.model, 'remove-link-review', this.removeLinkPreview);
+      this.listenTo(
+        this.model,
+        'remove-all-draft-attachments',
+        this.clearAttachments
+      );
+
+      // Events on Message models - we still listen to these here because they
+      //   can be emitted by the non-reduxified MessageDetail pane
       this.listenTo(
         this.model.messageCollection,
         'show-identity',
@@ -106,34 +185,10 @@
       );
       this.listenTo(this.model.messageCollection, 'force-send', this.forceSend);
       this.listenTo(this.model.messageCollection, 'delete', this.deleteMessage);
-      this.listenTo(this.model.messageCollection, 'height-changed', () =>
-        this.view.scrollToBottomIfNeeded()
-      );
       this.listenTo(
         this.model.messageCollection,
-        'scroll-to-message',
-        this.scrollToMessage
-      );
-      this.listenTo(
-        this.model.messageCollection,
-        'reply',
-        this.setQuoteMessage
-      );
-      this.listenTo(this.model.messageCollection, 'retry', this.retrySend);
-      this.listenTo(
-        this.model.messageCollection,
-        'show-contact-detail',
-        this.showContactDetail
-      );
-      this.listenTo(
-        this.model.messageCollection,
-        'show-lightbox',
+        'show-visual-attachment',
         this.showLightbox
-      );
-      this.listenTo(
-        this.model.messageCollection,
-        'download',
-        this.downloadAttachment
       );
       this.listenTo(
         this.model.messageCollection,
@@ -142,37 +197,30 @@
       );
       this.listenTo(
         this.model.messageCollection,
-        'open-conversation',
-        this.openConversation
+        'navigate-to',
+        this.navigateTo
       );
-      this.listenTo(
-        this.model.messageCollection,
-        'show-message-detail',
-        this.showMessageDetail
-      );
-      this.listenTo(this.model.messageCollection, 'navigate-to', url => {
-        window.location = url;
-      });
       this.listenTo(
         this.model.messageCollection,
         'download-new-version',
-        () => {
-          window.location = 'https://signal.org/download';
-        }
+        this.downloadNewVersion
       );
 
       this.lazyUpdateVerified = _.debounce(
         this.model.updateVerified.bind(this.model),
         1000 // one second
       );
-      this.throttledGetProfiles = _.throttle(
-        this.model.getProfiles.bind(this.model),
-        1000 * 60 * 5 // five minutes
-      );
+      this.model.throttledGetProfiles =
+        this.model.throttledGetProfiles ||
+        _.throttle(
+          this.model.getProfiles.bind(this.model),
+          1000 * 60 * 5 // five minutes
+        );
       this.debouncedMaybeGrabLinkPreview = _.debounce(
         this.maybeGrabLinkPreview.bind(this),
         200
       );
+      this.debouncedSaveDraft = _.debounce(this.saveDraft.bind(this), 200);
 
       this.render();
 
@@ -181,64 +229,29 @@
       this.loadingScreen.$el.prependTo(this.$('.discussion-container'));
 
       this.window = options.window;
-      this.fileInput = new Whisper.FileInputView({
-        el: this.$('.attachment-list'),
-      });
-      this.listenTo(
-        this.fileInput,
-        'choose-attachment',
-        this.onChooseAttachment
+      const attachmentListEl = $(
+        '<div class="module-composition-area__attachment-list"></div>'
       );
-      this.listenTo(this.fileInput, 'staged-attachments-changed', () => {
-        this.view.restoreBottomOffset();
-        this.toggleMicrophone();
-        if (this.fileInput.hasFiles()) {
-          this.removeLinkPreview();
-        }
-      });
 
-      this.view = new Whisper.MessageListView({
-        collection: this.model.messageCollection,
-        window: this.window,
+      this.attachmentListView = new Whisper.ReactWrapperView({
+        el: attachmentListEl,
+        Component: window.Signal.Components.AttachmentList,
+        props: this.getPropsForAttachmentList(),
       });
-      this.$('.discussion-container').append(this.view.el);
-      this.view.render();
-
-      this.onFocus = () => {
-        if (this.$el.css('display') !== 'none') {
-          this.markRead();
-        }
-      };
-      this.window.addEventListener('focus', this.onFocus);
 
       extension.windows.onClosed(() => {
         this.unload('windows closed');
       });
 
-      this.fetchMessages();
-
-      this.$('.send-message').focus(this.focusBottomBar.bind(this));
-      this.$('.send-message').blur(this.unfocusBottomBar.bind(this));
-
       this.setupHeader();
-      this.setupCompositionArea();
+      this.setupTimeline();
+      this.setupCompositionArea({ attachmentListEl: attachmentListEl[0] });
     },
 
     events: {
-      click: 'onClick',
       'click .composition-area-placeholder': 'onClickPlaceholder',
       'click .bottom-bar': 'focusMessageField',
       'click .capture-audio .microphone': 'captureAudio',
-      'click .module-scroll-down': 'scrollToBottom',
-      'focus .send-message': 'focusBottomBar',
-      'blur .send-message': 'unfocusBottomBar',
-      'loadMore .message-list': 'loadMoreMessages',
-      'newOffscreenMessage .message-list': 'addScrollDownButtonWithCount',
-      'atBottom .message-list': 'removeScrollDownButton',
-      'farFromBottom .message-list': 'addScrollDownButton',
-      'lazyScroll .message-list': 'onLazyScroll',
-
-      'click button.paperclip': 'onChooseAttachment',
       'change input.file-input': 'onChoseAttachment',
 
       dragover: 'onDragOver',
@@ -278,15 +291,21 @@
             this.setDisappearingMessages(seconds),
           onDeleteMessages: () => this.destroyMessages(),
           onResetSession: () => this.endSession(),
+          onSearchInConversation: () => {
+            const { searchInConversation } = window.reduxActions.search;
+            const name = this.model.isMe()
+              ? i18n('noteToSelf')
+              : this.model.getTitle();
+            searchInConversation(this.model.id, name);
+          },
 
           // These are view only and don't update the Conversation model, so they
           //   need a manual update call.
           onShowSafetyNumber: () => {
             this.showSafetyNumber();
           },
-          onShowAllMedia: async () => {
-            await this.showAllMedia();
-            this.updateHeader();
+          onShowAllMedia: () => {
+            this.showAllMedia();
           },
           onShowGroupMembers: async () => {
             await this.showMembers();
@@ -294,15 +313,24 @@
           },
           onGoBack: () => {
             this.resetPanel();
-            this.updateHeader();
           },
 
           onArchive: () => {
-            this.unload('archive');
             this.model.setArchived(true);
+            this.model.trigger('unload', 'archive');
+
+            Whisper.ToastView.show(
+              Whisper.ConversationArchivedToast,
+              document.body
+            );
           },
           onMoveToInbox: () => {
             this.model.setArchived(false);
+
+            Whisper.ToastView.show(
+              Whisper.ConversationUnarchivedToast,
+              document.body
+            );
           },
         };
       };
@@ -316,20 +344,29 @@
       this.$('.conversation-header').append(this.titleView.el);
     },
 
-    setupCompositionArea() {
+    setupCompositionArea({ attachmentListEl }) {
       const compositionApi = { current: null };
       this.compositionApi = compositionApi;
 
+      const micCellEl = $(`
+        <div class="capture-audio">
+          <button class="microphone"></button>
+        </div>
+      `)[0];
+
       const props = {
+        id: this.model.id,
         compositionApi,
         onClickAddPack: () => this.showStickerManager(),
         onPickSticker: (packId, stickerId) =>
           this.sendStickerMessage({ packId, stickerId }),
         onSubmit: message => this.sendMessage(message),
-        onDirtyChange: dirty => this.toggleMicrophone(dirty),
         onEditorStateChange: (msg, caretLocation) =>
           this.onEditorStateChange(msg, caretLocation),
-        onEditorSizeChange: rect => this.onEditorSizeChange(rect),
+        onTextTooLong: () => this.showToast(Whisper.MessageBodyTooLongToast),
+        onChooseAttachment: this.onChooseAttachment.bind(this),
+        micCellEl,
+        attachmentListEl,
       };
 
       this.compositionAreaView = new Whisper.ReactWrapperView({
@@ -343,18 +380,405 @@
       );
     },
 
+    setupTimeline() {
+      const { id } = this.model;
+
+      const replyToMessage = messageId => {
+        this.setQuoteMessage(messageId);
+      };
+      const retrySend = messageId => {
+        this.retrySend(messageId);
+      };
+      const deleteMessage = messageId => {
+        this.deleteMessage(messageId);
+      };
+      const showMessageDetail = messageId => {
+        this.showMessageDetail(messageId);
+      };
+      const openConversation = (conversationId, messageId) => {
+        this.openConversation(conversationId, messageId);
+      };
+      const showContactDetail = options => {
+        this.showContactDetail(options);
+      };
+      const showVisualAttachment = options => {
+        this.showLightbox(options);
+      };
+      const downloadAttachment = options => {
+        this.downloadAttachment(options);
+      };
+      const displayTapToViewMessage = messageId =>
+        this.displayTapToViewMessage(messageId);
+      const showIdentity = conversationId => {
+        this.showSafetyNumber(conversationId);
+      };
+      const openLink = url => {
+        this.navigateTo(url);
+      };
+      const downloadNewVersion = () => {
+        this.downloadNewVersion();
+      };
+
+      const scrollToQuotedMessage = async options => {
+        const { author, sentAt } = options;
+
+        const conversationId = this.model.id;
+        const messages = await getMessagesBySentAt(sentAt, {
+          MessageCollection: Whisper.MessageCollection,
+        });
+        const message = messages.find(
+          item =>
+            item.get('conversationId') === conversationId &&
+            item.getSource() === author
+        );
+
+        if (!message) {
+          this.showToast(Whisper.OriginalNotFoundToast);
+          return;
+        }
+
+        this.scrollToMessage(message.id);
+      };
+
+      const loadOlderMessages = async oldestMessageId => {
+        const {
+          messagesAdded,
+          setMessagesLoading,
+        } = window.reduxActions.conversations;
+        const conversationId = this.model.id;
+
+        setMessagesLoading(conversationId, true);
+        const finish = this.setInProgressFetch();
+
+        try {
+          const message = await getMessageById(oldestMessageId, {
+            Message: Whisper.Message,
+          });
+          if (!message) {
+            throw new Error(
+              `loadOlderMessages: failed to load message ${oldestMessageId}`
+            );
+          }
+
+          const receivedAt = message.get('received_at');
+          const models = await getOlderMessagesByConversation(conversationId, {
+            receivedAt,
+            limit: 500,
+            MessageCollection: Whisper.MessageCollection,
+          });
+
+          if (models.length < 1) {
+            window.log.warn(
+              'loadOlderMessages: requested, but loaded no messages'
+            );
+            return;
+          }
+
+          const cleaned = await this.cleanModels(models);
+          this.model.messageCollection.add(cleaned);
+
+          const isNewMessage = false;
+          messagesAdded(
+            id,
+            models.map(model => model.getReduxData()),
+            isNewMessage,
+            window.isActive()
+          );
+        } catch (error) {
+          setMessagesLoading(conversationId, true);
+          throw error;
+        } finally {
+          finish();
+        }
+      };
+      const loadNewerMessages = async newestMessageId => {
+        const {
+          messagesAdded,
+          setMessagesLoading,
+        } = window.reduxActions.conversations;
+        const conversationId = this.model.id;
+
+        setMessagesLoading(conversationId, true);
+        const finish = this.setInProgressFetch();
+
+        try {
+          const message = await getMessageById(newestMessageId, {
+            Message: Whisper.Message,
+          });
+          if (!message) {
+            throw new Error(
+              `loadNewerMessages: failed to load message ${newestMessageId}`
+            );
+          }
+
+          const receivedAt = message.get('received_at');
+          const models = await getNewerMessagesByConversation(this.model.id, {
+            receivedAt,
+            limit: 500,
+            MessageCollection: Whisper.MessageCollection,
+          });
+
+          if (models.length < 1) {
+            window.log.warn(
+              'loadNewerMessages: requested, but loaded no messages'
+            );
+            return;
+          }
+
+          const cleaned = await this.cleanModels(models);
+          this.model.messageCollection.add(cleaned);
+
+          const isNewMessage = false;
+          messagesAdded(
+            id,
+            models.map(model => model.getReduxData()),
+            isNewMessage,
+            window.isActive()
+          );
+        } catch (error) {
+          setMessagesLoading(conversationId, false);
+          throw error;
+        } finally {
+          finish();
+        }
+      };
+      const markMessageRead = async messageId => {
+        if (!window.isActive()) {
+          return;
+        }
+
+        const message = await getMessageById(messageId, {
+          Message: Whisper.Message,
+        });
+        if (!message) {
+          throw new Error(
+            `markMessageRead: failed to load message ${messageId}`
+          );
+        }
+
+        await this.model.markRead(message.get('received_at'));
+      };
+
+      this.timelineView = new Whisper.ReactWrapperView({
+        className: 'timeline-wrapper',
+        JSX: Signal.State.Roots.createTimeline(window.reduxStore, {
+          id,
+
+          deleteMessage,
+          displayTapToViewMessage,
+          downloadAttachment,
+          downloadNewVersion,
+          loadNewerMessages,
+          loadNewestMessages: this.loadNewestMessages.bind(this),
+          loadAndScroll: this.loadAndScroll.bind(this),
+          loadOlderMessages,
+          markMessageRead,
+          openConversation,
+          openLink,
+          replyToMessage,
+          retrySend,
+          scrollToQuotedMessage,
+          showContactDetail,
+          showIdentity,
+          showMessageDetail,
+          showVisualAttachment,
+        }),
+      });
+
+      this.$('.timeline-placeholder').append(this.timelineView.el);
+    },
+
+    showToast(ToastView) {
+      const toast = new ToastView();
+      toast.$el.appendTo(this.$el);
+      toast.render();
+    },
+
+    async cleanModels(collection) {
+      const result = collection
+        .filter(message => Boolean(message.id))
+        .map(message => MessageController.register(message.id, message));
+
+      const eliminated = collection.length - result.length;
+      if (eliminated > 0) {
+        window.log.warn(
+          `cleanModels: Eliminated ${eliminated} messages without an id`
+        );
+      }
+
+      for (let max = result.length, i = 0; i < max; i += 1) {
+        const message = result[i];
+        const { attributes } = message;
+        const { schemaVersion } = attributes;
+
+        if (schemaVersion < Message.VERSION_NEEDED_FOR_DISPLAY) {
+          // Yep, we really do want to wait for each of these
+          // eslint-disable-next-line no-await-in-loop
+          const upgradedMessage = await upgradeMessageSchema(attributes);
+          message.set(upgradedMessage);
+          // eslint-disable-next-line no-await-in-loop
+          await window.Signal.Data.saveMessage(upgradedMessage, {
+            Message: Whisper.Message,
+          });
+        }
+      }
+
+      return result;
+    },
+
+    async scrollToMessage(messageId) {
+      const message = await getMessageById(messageId, {
+        Message: Whisper.Message,
+      });
+      if (!message) {
+        throw new Error(`scrollToMessage: failed to load message ${messageId}`);
+      }
+
+      if (this.model.messageCollection.get(messageId)) {
+        const { scrollToMessage } = window.reduxActions.conversations;
+        scrollToMessage(this.model.id, messageId);
+        return;
+      }
+
+      this.loadAndScroll(messageId);
+    },
+
+    setInProgressFetch() {
+      let resolvePromise;
+      this.model.inProgressFetch = new Promise(resolve => {
+        resolvePromise = resolve;
+      });
+
+      const finish = () => {
+        resolvePromise();
+        this.model.inProgressFinish = null;
+      };
+
+      return finish;
+    },
+
+    async loadAndScroll(messageId, options) {
+      const { disableScroll } = options || {};
+      const {
+        messagesReset,
+        setMessagesLoading,
+      } = window.reduxActions.conversations;
+      const conversationId = this.model.id;
+
+      setMessagesLoading(conversationId, true);
+      const finish = this.setInProgressFetch();
+
+      try {
+        const message = await getMessageById(messageId, {
+          Message: Whisper.Message,
+        });
+        if (!message) {
+          throw new Error(
+            `loadMoreAndScroll: failed to load message ${messageId}`
+          );
+        }
+
+        const receivedAt = message.get('received_at');
+        const older = await getOlderMessagesByConversation(conversationId, {
+          limit: 250,
+          receivedAt,
+          MessageCollection: Whisper.MessageCollection,
+        });
+        const newer = await getNewerMessagesByConversation(conversationId, {
+          limit: 250,
+          receivedAt,
+          MessageCollection: Whisper.MessageCollection,
+        });
+        const metrics = await getMessageMetricsForConversation(conversationId);
+
+        const all = [...older.models, message, ...newer.models];
+
+        const cleaned = await this.cleanModels(all);
+        this.model.messageCollection.reset(cleaned);
+        const scrollToMessageId = disableScroll ? undefined : messageId;
+
+        messagesReset(
+          conversationId,
+          cleaned.map(model => model.getReduxData()),
+          metrics,
+          scrollToMessageId
+        );
+      } catch (error) {
+        setMessagesLoading(conversationId, false);
+        throw error;
+      } finally {
+        finish();
+      }
+    },
+
+    async loadNewestMessages(newestMessageId, setFocus) {
+      const {
+        messagesReset,
+        setMessagesLoading,
+      } = window.reduxActions.conversations;
+      const conversationId = this.model.id;
+
+      setMessagesLoading(conversationId, true);
+      const finish = this.setInProgressFetch();
+
+      try {
+        let scrollToLatestUnread = true;
+
+        if (newestMessageId) {
+          const message = await getMessageById(newestMessageId, {
+            Message: Whisper.Message,
+          });
+          if (!message) {
+            window.log.warn(
+              `loadNewestMessages: did not find message ${newestMessageId}`
+            );
+          }
+
+          // If newest in-memory message is unread, scrolling down would mean going to
+          //   the very bottom, not the oldest unread.
+          scrollToLatestUnread = !message.isUnread();
+        }
+
+        const metrics = await getMessageMetricsForConversation(conversationId);
+
+        if (scrollToLatestUnread && metrics.oldestUnread) {
+          this.loadAndScroll(metrics.oldestUnread.id, {
+            disableScroll: !setFocus,
+          });
+          return;
+        }
+
+        const messages = await getOlderMessagesByConversation(conversationId, {
+          limit: 500,
+          MessageCollection: Whisper.MessageCollection,
+        });
+
+        const cleaned = await this.cleanModels(messages);
+        this.model.messageCollection.reset(cleaned);
+        const scrollToMessageId =
+          setFocus && metrics.newest ? metrics.newest.id : undefined;
+
+        messagesReset(
+          conversationId,
+          cleaned.map(model => model.getReduxData()),
+          metrics,
+          scrollToMessageId
+        );
+      } catch (error) {
+        setMessagesLoading(conversationId, false);
+        throw error;
+      } finally {
+        finish();
+      }
+    },
+
     // We need this, or clicking the reactified buttons will submit the form and send any
     //   mid-composition message content.
     onClickPlaceholder(e) {
       e.preventDefault();
     },
 
-    onChooseAttachment(e) {
-      if (e) {
-        e.stopPropagation();
-        e.preventDefault();
-      }
-
+    onChooseAttachment() {
       this.$('input.file-input').click();
     },
     async onChoseAttachment() {
@@ -364,37 +788,11 @@
       for (let i = 0, max = files.length; i < max; i += 1) {
         const file = files[i];
         // eslint-disable-next-line no-await-in-loop
-        await this.fileInput.maybeAddAttachment(file);
+        await this.maybeAddAttachment(file);
         this.toggleMicrophone();
       }
 
       fileField.val(null);
-    },
-
-    onDragOver(e) {
-      this.fileInput.onDragOver(e);
-    },
-    onDragLeave(e) {
-      this.fileInput.onDragLeave(e);
-    },
-    onDrop(e) {
-      this.fileInput.onDrop(e);
-    },
-    onPaste(e) {
-      this.fileInput.onPaste(e);
-    },
-
-    onPrune() {
-      if (!this.model.messageCollection.length || !this.lastActivity) {
-        return;
-      }
-
-      const oneHourAgo = Date.now() - 60 * 60 * 1000;
-      if (this.isHidden() && this.lastActivity < oneHourAgo) {
-        this.unload('inactivity');
-      } else if (this.view.atBottom()) {
-        this.trim();
-      }
     },
 
     unload(reason) {
@@ -405,16 +803,47 @@
         reason
       );
 
-      this.fileInput.remove();
+      const { conversationUnloaded } = window.reduxActions.conversations;
+      if (conversationUnloaded) {
+        conversationUnloaded(this.model.id);
+      }
+
+      if (this.model.get('draftChanged')) {
+        if (this.model.hasDraft()) {
+          this.model.set({
+            draftChanged: false,
+            draftTimestamp: Date.now(),
+            timestamp: Date.now(),
+          });
+        } else {
+          this.model.set({
+            draftChanged: false,
+            draftTimestamp: null,
+          });
+        }
+
+        // We don't wait here; we need to take down the view
+        this.saveModel();
+
+        this.model.updateLastMessage();
+      }
+
       this.titleView.remove();
+      this.timelineView.remove();
+      this.compositionAreaView.remove();
+
+      if (this.attachmentListView) {
+        this.attachmentListView.remove();
+      }
+      if (this.captionEditorView) {
+        this.captionEditorView.remove();
+      }
       if (this.stickerButtonView) {
         this.stickerButtonView.remove();
       }
-
       if (this.stickerPreviewModalView) {
         this.stickerPreviewModalView.remove();
       }
-
       if (this.captureAudioView) {
         this.captureAudioView.remove();
       }
@@ -443,47 +872,596 @@
         }
       }
 
-      this.window.removeEventListener('focus', this.onFocus);
-
-      this.view.remove();
-
       this.remove();
 
-      this.model.messageCollection.forEach(model => {
-        model.trigger('unload');
-      });
       this.model.messageCollection.reset([]);
     },
 
-    trim() {
-      const MAX = 100;
-      const toRemove = this.model.messageCollection.length - MAX;
-      if (toRemove <= 0) {
+    navigateTo(url) {
+      window.location = url;
+    },
+
+    downloadNewVersion() {
+      window.location = 'https://signal.org/download';
+    },
+
+    onDragOver(e) {
+      if (e.originalEvent.dataTransfer.types[0] !== 'Files') {
         return;
       }
 
-      const models = [];
-      for (let i = 0; i < toRemove; i += 1) {
-        const model = this.model.messageCollection.at(i);
-        models.push(model);
-      }
+      e.stopPropagation();
+      e.preventDefault();
+      this.$el.addClass('dropoff');
+    },
 
-      if (!models.length) {
+    onDragLeave(e) {
+      if (e.originalEvent.dataTransfer.types[0] !== 'Files') {
         return;
       }
 
-      window.log.info(
-        'trimming conversation',
-        this.model.idForLogging(),
-        'of',
-        models.length,
-        'old messages'
-      );
+      e.stopPropagation();
+      e.preventDefault();
+    },
 
-      this.model.messageCollection.remove(models);
-      _.forEach(models, model => {
-        model.trigger('unload');
+    async onDrop(e) {
+      if (e.originalEvent.dataTransfer.types[0] !== 'Files') {
+        return;
+      }
+
+      e.stopPropagation();
+      e.preventDefault();
+
+      const { files } = e.originalEvent.dataTransfer;
+      for (let i = 0, max = files.length; i < max; i += 1) {
+        const file = files[i];
+        // eslint-disable-next-line no-await-in-loop
+        await this.maybeAddAttachment(file);
+      }
+    },
+
+    onPaste(e) {
+      const { items } = e.originalEvent.clipboardData;
+      let imgBlob = null;
+      for (let i = 0; i < items.length; i += 1) {
+        if (items[i].type.split('/')[0] === 'image') {
+          imgBlob = items[i].getAsFile();
+        }
+      }
+      if (imgBlob !== null) {
+        const file = imgBlob;
+        this.maybeAddAttachment(file);
+
+        e.stopPropagation();
+        e.preventDefault();
+      }
+    },
+
+    getPropsForAttachmentList() {
+      const draftAttachments = this.model.get('draftAttachments') || [];
+
+      return {
+        // In conversation model/redux
+        attachments: draftAttachments.map(attachment => ({
+          ...attachment,
+          url: attachment.screenshotPath
+            ? getAbsoluteDraftPath(attachment.screenshotPath)
+            : getAbsoluteDraftPath(attachment.path),
+        })),
+        // Passed in from ConversationView
+        onAddAttachment: this.onChooseAttachment.bind(this),
+        onClickAttachment: this.onClickAttachment.bind(this),
+        onCloseAttachment: this.onCloseAttachment.bind(this),
+        onClose: this.clearAttachments.bind(this),
+      };
+    },
+
+    onClickAttachment(attachment) {
+      const getProps = () => ({
+        url: attachment.url,
+        caption: attachment.caption,
+        attachment,
+        onSave,
       });
+
+      const onSave = caption => {
+        this.model.set({
+          draftAttachments: this.model.get('draftAttachments').map(item => {
+            if (
+              (item.path && item.path === attachment.path) ||
+              (item.screenshotPath &&
+                item.screenshotPath === attachment.screenshotPath)
+            ) {
+              return {
+                ...attachment,
+                caption,
+              };
+            }
+
+            return item;
+          }),
+          draftChanged: true,
+        });
+
+        this.captionEditorView.remove();
+        Signal.Backbone.Views.Lightbox.hide();
+
+        this.updateAttachmentsView();
+        this.saveModel();
+      };
+
+      this.captionEditorView = new Whisper.ReactWrapperView({
+        className: 'attachment-list-wrapper',
+        Component: window.Signal.Components.CaptionEditor,
+        props: getProps(),
+        onClose: () => Signal.Backbone.Views.Lightbox.hide(),
+      });
+      Signal.Backbone.Views.Lightbox.show(this.captionEditorView.el);
+    },
+
+    async deleteDraftAttachment(attachment) {
+      if (attachment.screenshotPath) {
+        await deleteDraftFile(attachment.screenshotPath);
+      }
+      if (attachment.path) {
+        await deleteDraftFile(attachment.path);
+      }
+    },
+
+    async saveModel() {
+      window.Signal.Data.updateConversation(
+        this.model.id,
+        this.model.attributes,
+        {
+          Conversation: Whisper.Conversation,
+        }
+      );
+    },
+
+    async addAttachment(attachment) {
+      const onDisk = await this.writeDraftAttachment(attachment);
+
+      const draftAttachments = this.model.get('draftAttachments') || [];
+      this.model.set({
+        draftAttachments: [...draftAttachments, onDisk],
+        draftChanged: true,
+      });
+      await this.saveModel();
+
+      this.updateAttachmentsView();
+    },
+
+    async onCloseAttachment(attachment) {
+      const draftAttachments = this.model.get('draftAttachments') || [];
+
+      this.model.set({
+        draftAttachments: _.reject(
+          draftAttachments,
+          item => item.path === attachment.path
+        ),
+        draftChanged: true,
+      });
+
+      this.updateAttachmentsView();
+
+      await this.saveModel();
+      await this.deleteDraftAttachment(attachment);
+    },
+
+    async clearAttachments() {
+      this.voiceNoteAttachment = null;
+
+      const draftAttachments = this.model.get('draftAttachments') || [];
+      this.model.set({
+        draftAttachments: [],
+        draftChanged: true,
+      });
+
+      this.updateAttachmentsView();
+
+      // We're fine doing this all at once; at most it should be 32 attachments
+      await Promise.all([
+        this.saveModel(),
+        Promise.all(
+          draftAttachments.map(attachment =>
+            this.deleteDraftAttachment(attachment)
+          )
+        ),
+      ]);
+    },
+
+    hasFiles() {
+      const draftAttachments = this.model.get('draftAttachments') || [];
+      return draftAttachments.length > 0;
+    },
+
+    async getFiles() {
+      if (this.voiceNoteAttachment) {
+        // We don't need to pull these off disk; we return them as-is
+        return [this.voiceNoteAttachment];
+      }
+
+      const draftAttachments = this.model.get('draftAttachments') || [];
+      const files = _.compact(
+        await Promise.all(
+          draftAttachments.map(attachment => this.getFile(attachment))
+        )
+      );
+      return files;
+    },
+
+    async getFile(attachment) {
+      if (!attachment) {
+        return Promise.resolve();
+      }
+
+      const data = await readDraftData(attachment.path);
+      if (data.byteLength !== attachment.size) {
+        window.log.error(
+          `Attachment size from disk ${
+            data.byteLength
+          } did not match attachment size ${attachment.size}`
+        );
+        return null;
+      }
+
+      return {
+        ..._.pick(attachment, ['contentType', 'fileName', 'size', 'caption']),
+        data,
+      };
+    },
+
+    arrayBufferFromFile(file) {
+      return new Promise((resolve, reject) => {
+        const FR = new FileReader();
+        FR.onload = e => {
+          resolve(e.target.result);
+        };
+        FR.onerror = reject;
+        FR.onabort = reject;
+        FR.readAsArrayBuffer(file);
+      });
+    },
+
+    showFileSizeError({ limit, units, u }) {
+      const toast = new Whisper.FileSizeToast({
+        model: { limit, units: units[u] },
+      });
+      toast.$el.insertAfter(this.$el);
+      toast.render();
+    },
+
+    updateAttachmentsView() {
+      this.attachmentListView.update(this.getPropsForAttachmentList());
+      this.toggleMicrophone();
+      if (this.hasFiles()) {
+        this.removeLinkPreview();
+      }
+    },
+
+    async writeDraftAttachment(attachment) {
+      let toWrite = attachment;
+
+      if (toWrite.data) {
+        const path = await writeNewDraftData(toWrite.data);
+        toWrite = {
+          ..._.omit(toWrite, ['data']),
+          path,
+        };
+      }
+      if (toWrite.screenshotData) {
+        const screenshotPath = await writeNewDraftData(toWrite.screenshotData);
+        toWrite = {
+          ..._.omit(toWrite, ['screenshotData']),
+          screenshotPath,
+        };
+      }
+
+      return toWrite;
+    },
+
+    async maybeAddAttachment(file) {
+      if (!file) {
+        return;
+      }
+
+      const MB = 1000 * 1024;
+      if (file.size > 100 * MB) {
+        this.showFileSizeError({ limit: 100, units: ['MB'], u: 0 });
+        return;
+      }
+
+      if (window.Signal.Util.isFileDangerous(file.name)) {
+        this.showToast(Whisper.DangerousFileTypeToast);
+        return;
+      }
+
+      const draftAttachments = this.model.get('draftAttachments') || [];
+      if (draftAttachments.length >= 32) {
+        this.showToast(Whisper.MaxAttachmentsToast);
+        return;
+      }
+
+      const haveNonImage = _.any(
+        draftAttachments,
+        attachment => !MIME.isImage(attachment.contentType)
+      );
+      // You can't add another attachment if you already have a non-image staged
+      if (haveNonImage) {
+        this.showToast(Whisper.OneNonImageAtATimeToast);
+        return;
+      }
+
+      // You can't add a non-image attachment if you already have attachments staged
+      if (!MIME.isImage(file.type) && draftAttachments.length > 0) {
+        this.showToast(Whisper.CannotMixImageAndNonImageAttachmentsToast);
+        return;
+      }
+
+      let attachment;
+
+      try {
+        if (Signal.Util.GoogleChrome.isImageTypeSupported(file.type)) {
+          attachment = await this.handleImageAttachment(file);
+        } else if (Signal.Util.GoogleChrome.isVideoTypeSupported(file.type)) {
+          attachment = await this.handleVideoAttachment(file);
+        } else {
+          const data = await this.arrayBufferFromFile(file);
+          attachment = {
+            data,
+            size: data.byteLength,
+            contentType: file.type,
+            fileName: file.name,
+          };
+        }
+      } catch (e) {
+        window.log.error(
+          `Was unable to generate thumbnail for file type ${file.type}`,
+          e && e.stack ? e.stack : e
+        );
+        const data = await this.arrayBufferFromFile(file);
+        attachment = {
+          data,
+          size: data.byteLength,
+          contentType: file.type,
+          fileName: file.name,
+        };
+      }
+
+      try {
+        if (!this.isSizeOkay(attachment)) {
+          return;
+        }
+      } catch (error) {
+        window.log.error(
+          'Error ensuring that image is properly sized:',
+          error && error.stack ? error.stack : error
+        );
+
+        this.showToast(Whisper.UnableToLoadToast);
+        return;
+      }
+
+      await this.addAttachment(attachment);
+    },
+
+    isSizeOkay(attachment) {
+      let limitKb = 1000000;
+      const type =
+        attachment.contentType === 'image/gif'
+          ? 'gif'
+          : attachment.contentType.split('/')[0];
+
+      switch (type) {
+        case 'image':
+          limitKb = 6000;
+          break;
+        case 'gif':
+          limitKb = 25000;
+          break;
+        case 'audio':
+          limitKb = 100000;
+          break;
+        case 'video':
+          limitKb = 100000;
+          break;
+        default:
+          limitKb = 100000;
+          break;
+      }
+      if ((attachment.data.byteLength / 1024).toFixed(4) >= limitKb) {
+        const units = ['kB', 'MB', 'GB'];
+        let u = -1;
+        let limit = limitKb * 1000;
+        do {
+          limit /= 1000;
+          u += 1;
+        } while (limit >= 1000 && u < units.length - 1);
+        this.showFileSizeError({ limit, units, u });
+        return false;
+      }
+
+      return true;
+    },
+
+    async handleVideoAttachment(file) {
+      const objectUrl = URL.createObjectURL(file);
+      if (!objectUrl) {
+        throw new Error('Failed to create object url for video!');
+      }
+      try {
+        const screenshotContentType = 'image/png';
+        const screenshotBlob = await VisualAttachment.makeVideoScreenshot({
+          objectUrl,
+          contentType: screenshotContentType,
+          logger: window.log,
+        });
+        const screenshotData = await VisualAttachment.blobToArrayBuffer(
+          screenshotBlob
+        );
+        const data = await this.arrayBufferFromFile(file);
+
+        return {
+          fileName: file.name,
+          screenshotContentType,
+          screenshotData,
+          screenshotSize: screenshotData.byteLength,
+          contentType: file.type,
+          data,
+          size: data.byteLength,
+        };
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+      }
+    },
+
+    async handleImageAttachment(file) {
+      if (MIME.isJPEG(file.type)) {
+        const rotatedDataUrl = await window.autoOrientImage(file);
+        const rotatedBlob = window.dataURLToBlobSync(rotatedDataUrl);
+        const {
+          contentType,
+          file: resizedBlob,
+          fileName,
+        } = await this.autoScale({
+          contentType: file.type,
+          fileName: file.name,
+          file: rotatedBlob,
+        });
+        const data = await await VisualAttachment.blobToArrayBuffer(
+          resizedBlob
+        );
+
+        return {
+          fileName: fileName || file.name,
+          contentType,
+          data,
+          size: data.byteLength,
+        };
+      }
+
+      const { contentType, file: resizedBlob, fileName } = await this.autoScale(
+        {
+          contentType: file.type,
+          fileName: file.name,
+          file,
+        }
+      );
+      const data = await await VisualAttachment.blobToArrayBuffer(resizedBlob);
+      return {
+        fileName: fileName || file.name,
+        contentType,
+        data,
+        size: data.byteLength,
+      };
+    },
+
+    autoScale(attachment) {
+      const { contentType, file, fileName } = attachment;
+      if (
+        contentType.split('/')[0] !== 'image' ||
+        contentType === 'image/tiff'
+      ) {
+        // nothing to do
+        return Promise.resolve(attachment);
+      }
+
+      return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const img = document.createElement('img');
+        img.onerror = reject;
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+
+          const maxSize = 6000 * 1024;
+          const maxHeight = 4096;
+          const maxWidth = 4096;
+          if (
+            img.naturalWidth <= maxWidth &&
+            img.naturalHeight <= maxHeight &&
+            file.size <= maxSize
+          ) {
+            resolve(attachment);
+            return;
+          }
+
+          const gifMaxSize = 25000 * 1024;
+          if (file.type === 'image/gif' && file.size <= gifMaxSize) {
+            resolve(attachment);
+            return;
+          }
+
+          if (file.type === 'image/gif') {
+            reject(new Error('GIF is too large'));
+            return;
+          }
+
+          const targetContentType = 'image/jpeg';
+          const canvas = loadImage.scale(img, {
+            canvas: true,
+            maxWidth,
+            maxHeight,
+          });
+
+          let quality = 0.95;
+          let i = 4;
+          let blob;
+          do {
+            i -= 1;
+            blob = window.dataURLToBlobSync(
+              canvas.toDataURL(targetContentType, quality)
+            );
+            quality = quality * maxSize / blob.size;
+            // NOTE: During testing with a large image, we observed the
+            // `quality` value being > 1. Should we clamp it to [0.5, 1.0]?
+            // See: https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/toBlob#Syntax
+            if (quality < 0.5) {
+              quality = 0.5;
+            }
+          } while (i > 0 && blob.size > maxSize);
+
+          resolve({
+            ...attachment,
+            fileName: this.fixExtension(fileName, targetContentType),
+            contentType: targetContentType,
+            file: blob,
+          });
+        };
+        img.src = url;
+      });
+    },
+
+    getFileName(fileName) {
+      if (!fileName) {
+        return '';
+      }
+
+      if (!fileName.includes('.')) {
+        return fileName;
+      }
+
+      return fileName
+        .split('.')
+        .slice(0, -1)
+        .join('.');
+    },
+
+    getType(contentType) {
+      if (!contentType) {
+        return '';
+      }
+
+      if (!contentType.includes('/')) {
+        return contentType;
+      }
+
+      return contentType.split('/')[1];
+    },
+
+    fixExtension(fileName, contentType) {
+      const extension = this.getType(contentType);
+      const name = this.getFileName(fileName);
+      return `${name}.${extension}`;
     },
 
     markAllAsVerifiedDefault(unverified) {
@@ -504,7 +1482,7 @@
 
     openSafetyNumberScreens(unverified) {
       if (unverified.length === 1) {
-        this.showSafetyNumber(unverified.at(0));
+        this.showSafetyNumber(unverified.at(0).id);
         return;
       }
 
@@ -548,57 +1526,21 @@
       }
     },
 
-    renderTypingBubble() {
-      const timers = this.model.contactTypingTimers || {};
-      const records = _.values(timers);
-      const mostRecent = _.first(_.sortBy(records, 'timestamp'));
-
-      if (!mostRecent && this.typingBubbleView) {
-        this.typingBubbleView.remove();
-        this.typingBubbleView = null;
-      }
-      if (!mostRecent) {
-        return;
-      }
-
-      const { sender } = mostRecent;
-      const contact = ConversationController.getOrCreate(sender, 'private');
-      const props = {
-        ...contact.format(),
-        conversationType: this.model.isPrivate() ? 'direct' : 'group',
-      };
-
-      if (this.typingBubbleView) {
-        this.typingBubbleView.update(props);
-        return;
-      }
-
-      this.typingBubbleView = new Whisper.ReactWrapperView({
-        className: 'message-wrapper typing-bubble-wrapper',
-        Component: Signal.Components.TypingBubble,
-        props,
-      });
-      this.typingBubbleView.$el.appendTo(this.$('.typing-container'));
-
-      if (this.view.atBottom()) {
-        this.typingBubbleView.el.scrollIntoView();
-      }
+    toggleMicrophone() {
+      this.compositionApi.current.setShowMic(!this.hasFiles());
     },
 
-    toggleMicrophone(dirty = false) {
-      if (dirty || this.fileInput.hasFiles()) {
-        this.$('.capture-audio').hide();
-      } else {
-        this.$('.capture-audio').show();
-      }
-    },
     captureAudio(e) {
-      e.preventDefault();
+      if (e) {
+        e.preventDefault();
+      }
 
-      if (this.fileInput.hasFiles()) {
-        const toast = new Whisper.VoiceNoteMustBeOnlyAttachmentToast();
-        toast.$el.appendTo(this.$el);
-        toast.render();
+      if (this.compositionApi.current.isDirty()) {
+        return;
+      }
+
+      if (this.hasFiles()) {
+        this.showToast(Whisper.VoiceNoteMustBeOnlyAttachmentToast);
         return;
       }
 
@@ -617,134 +1559,76 @@
       view.on('send', this.handleAudioCapture.bind(this));
       view.on('closed', this.endCaptureAudio.bind(this));
       view.$el.appendTo(this.$('.capture-audio'));
+      view.$('.finish').focus();
+      this.compositionApi.current.setMicActive(true);
 
       this.disableMessageField();
       this.$('.microphone').hide();
     },
-    handleAudioCapture(blob) {
-      this.fileInput.addAttachment({
+    async handleAudioCapture(blob) {
+      if (this.hasFiles()) {
+        throw new Error('A voice note cannot be sent with other attachments');
+      }
+
+      const data = await this.arrayBufferFromFile(blob);
+
+      // These aren't persisted to disk; they are meant to be sent immediately
+      this.voiceNoteAttachment = {
         contentType: blob.type,
-        file: blob,
-        isVoiceNote: true,
-      });
+        data,
+        size: data.byteLength,
+        flags: textsecure.protobuf.AttachmentPointer.Flags.VOICE_MESSAGE,
+      };
+
+      // Note: The RecorderView removes itself on send
+      this.captureAudioView = null;
+
       this.sendMessage();
     },
     endCaptureAudio() {
       this.enableMessageField();
       this.$('.microphone').show();
+
+      // Note: The RecorderView removes itself on close
       this.captureAudioView = null;
+
+      this.compositionApi.current.setMicActive(false);
     },
 
-    unfocusBottomBar() {
-      this.$('.bottom-bar form').removeClass('active');
-    },
-    focusBottomBar() {
-      this.$('.bottom-bar form').addClass('active');
-    },
+    async onOpened(messageId) {
+      if (messageId) {
+        const message = await getMessageById(messageId, {
+          Message: Whisper.Message,
+        });
 
-    onLazyScroll() {
-      // The in-progress fetch check is important, because while that happens, lots
-      //   of messages are added to the DOM, one by one, changing window size and
-      //   generating scroll events.
-      if (!this.isHidden() && window.isFocused() && !this.inProgressFetch) {
-        this.lastActivity = Date.now();
-        this.markRead();
+        if (message) {
+          this.loadAndScroll(messageId);
+          return;
+        }
+
+        window.log.warn(`onOpened: Did not find message ${messageId}`);
       }
-    },
-    updateUnread() {
-      this.resetLastSeenIndicator();
-      // Waiting for scrolling caused by resetLastSeenIndicator to settle down
-      setTimeout(this.markRead.bind(this), 1);
-    },
 
-    onLoaded() {
-      const view = this.loadingScreen;
-      if (view) {
-        const openDelta = Date.now() - this.openStart;
-        window.log.info(
-          'Conversation',
-          this.model.idForLogging(),
-          'took',
-          openDelta,
-          'milliseconds to load'
-        );
-        this.loadingScreen = null;
-        view.remove();
+      this.loadNewestMessages();
+
+      this.focusMessageField();
+
+      const quotedMessageId = this.model.get('quotedMessageId');
+      if (quotedMessageId) {
+        this.setQuoteMessage(quotedMessageId);
       }
-    },
-
-    onOpened() {
-      this.openStart = Date.now();
-      this.lastActivity = Date.now();
 
       this.model.updateLastMessage();
 
-      const statusPromise = this.throttledGetProfiles();
+      const statusPromise = this.model.throttledGetProfiles();
       // eslint-disable-next-line more/no-then
       this.statusFetch = statusPromise.then(() =>
         // eslint-disable-next-line more/no-then
         this.model.updateVerified().then(() => {
           this.onVerifiedChange();
           this.statusFetch = null;
-          window.log.info('done with status fetch');
         })
       );
-
-      // We schedule our catch-up decrypt right after any in-progress fetch of
-      //   messages from the database, then ensure that the loading screen is only
-      //   dismissed when that is complete.
-      const messagesLoaded = this.inProgressFetch || Promise.resolve();
-
-      // eslint-disable-next-line more/no-then
-      messagesLoaded.then(this.onLoaded.bind(this), this.onLoaded.bind(this));
-
-      this.view.resetScrollPosition();
-      this.focusMessageField();
-      this.renderTypingBubble();
-
-      if (this.inProgressFetch) {
-        // eslint-disable-next-line more/no-then
-        this.inProgressFetch.then(this.updateUnread.bind(this));
-      } else {
-        this.updateUnread();
-      }
-    },
-
-    addScrollDownButtonWithCount() {
-      this.updateScrollDownButton(1);
-    },
-
-    addScrollDownButton() {
-      if (!this.scrollDownButton) {
-        this.updateScrollDownButton();
-      }
-    },
-
-    updateScrollDownButton(count) {
-      if (this.scrollDownButton) {
-        this.scrollDownButton.increment(count);
-      } else {
-        this.scrollDownButton = new Whisper.ScrollDownButtonView({ count });
-        this.scrollDownButton.render();
-        const container = this.$('.discussion-container');
-        container.append(this.scrollDownButton.el);
-      }
-    },
-
-    removeScrollDownButton() {
-      if (this.scrollDownButton) {
-        const button = this.scrollDownButton;
-        this.scrollDownButton = null;
-        button.remove();
-      }
-    },
-
-    removeLastSeenIndicator() {
-      if (this.lastSeenIndicator) {
-        const indicator = this.lastSeenIndicator;
-        this.lastSeenIndicator = null;
-        indicator.remove();
-      }
     },
 
     async retrySend(messageId) {
@@ -755,78 +1639,11 @@
       await message.retrySend();
     },
 
-    async scrollToMessage(options = {}) {
-      const { author, sentAt, referencedMessageNotFound } = options;
-
-      // For simplicity's sake, we show the 'not found' toast no matter what if we were
-      //   not able to find the referenced message when the quote was received.
-      if (referencedMessageNotFound) {
-        const toast = new Whisper.OriginalNotFoundToast();
-        toast.$el.appendTo(this.$el);
-        toast.render();
-        return;
-      }
-
-      // Look for message in memory first, which would tell us if we could scroll to it
-      const targetMessage = this.model.messageCollection.find(item => {
-        const messageAuthor = item.getContact();
-
-        if (!messageAuthor || author !== messageAuthor.id) {
-          return false;
-        }
-        if (sentAt !== item.get('sent_at')) {
-          return false;
-        }
-
-        return true;
-      });
-
-      // If there's no message already in memory, we won't be scrolling. So we'll gather
-      //   some more information then show an informative toast to the user.
-      if (!targetMessage) {
-        const collection = await window.Signal.Data.getMessagesBySentAt(
-          sentAt,
-          {
-            MessageCollection: Whisper.MessageCollection,
-          }
-        );
-
-        const found = Boolean(
-          collection.find(item => {
-            const messageAuthor = item.getContact();
-            return messageAuthor && author === messageAuthor.id;
-          })
-        );
-
-        if (found) {
-          const toast = new Whisper.FoundButNotLoadedToast();
-          toast.$el.appendTo(this.$el);
-          toast.render();
-        } else {
-          const toast = new Whisper.OriginalNoLongerAvailableToast();
-          toast.$el.appendTo(this.$el);
-          toast.render();
-        }
-        return;
-      }
-
-      const databaseId = targetMessage.id;
-      const el = this.$(`#${databaseId}`);
-      if (!el || el.length === 0) {
-        const toast = new Whisper.OriginalNoLongerAvailableToast();
-        toast.$el.appendTo(this.$el);
-        toast.render();
-
-        window.log.info(
-          `Error: had target message ${targetMessage.idForLogging()} in messageCollection, but it was not in DOM`
-        );
-        return;
-      }
-
-      el[0].scrollIntoView();
-    },
-
     async showAllMedia() {
+      if (this.panels && this.panels.length > 0) {
+        return;
+      }
+
       // We fetch more documents than media as they don’t require to be loaded
       // into memory right away. Revisit this once we have infinite scrolling:
       const DEFAULT_MEDIA_FETCH_COUNT = 50;
@@ -973,67 +1790,7 @@
       this.listenTo(this.model.messageCollection, 'remove', update);
 
       this.listenBack(view);
-    },
-
-    scrollToBottom() {
-      // If we're above the last seen indicator, we should scroll there instead
-      // Note: if we don't end up at the bottom of the conversation, button won't go away!
-      if (this.lastSeenIndicator) {
-        const location = this.lastSeenIndicator.$el.position().top;
-        if (location > 0) {
-          this.lastSeenIndicator.el.scrollIntoView();
-          return;
-        }
-        this.removeLastSeenIndicator();
-      }
-      this.view.scrollToBottom();
-    },
-
-    resetLastSeenIndicator(options = {}) {
-      _.defaults(options, { scroll: true });
-
-      let unreadCount = 0;
-      let oldestUnread = null;
-
-      // We need to iterate here because unseen non-messages do not contribute to
-      //   the badge number, but should be reflected in the indicator's count.
-      this.model.messageCollection.forEach(model => {
-        if (!model.get('unread')) {
-          return;
-        }
-
-        unreadCount += 1;
-        if (!oldestUnread) {
-          oldestUnread = model;
-        }
-      });
-
-      this.removeLastSeenIndicator();
-
-      if (oldestUnread) {
-        this.lastSeenIndicator = new Whisper.LastSeenIndicatorView({
-          count: unreadCount,
-        });
-        const lastSeenEl = this.lastSeenIndicator.render().$el;
-
-        lastSeenEl.insertBefore(this.$(`#${oldestUnread.get('id')}`));
-
-        if (this.view.atBottom() || options.scroll) {
-          lastSeenEl[0].scrollIntoView();
-        }
-
-        // scrollIntoView is an async operation, but we have no way to listen for
-        //   completion of the resultant scroll.
-        setTimeout(() => {
-          if (!this.view.atBottom()) {
-            this.addScrollDownButtonWithCount(unreadCount);
-          }
-        }, 1);
-      } else if (this.view.atBottom()) {
-        // If we already thought we were at the bottom, then ensure that's the case.
-        //   Attempting to account for unpredictable completion of message rendering.
-        setTimeout(() => this.view.scrollToBottom(), 1);
-      }
+      this.updateHeader();
     },
 
     focusMessageField() {
@@ -1065,63 +1822,7 @@
       this.compositionApi.current.resetEmojiResults(false);
     },
 
-    async loadMoreMessages() {
-      if (this.inProgressFetch) {
-        return;
-      }
-
-      this.view.measureScrollPosition();
-      const startingHeight = this.view.scrollHeight;
-
-      await this.fetchMessages();
-      // We delay this work to let scrolling/layout settle down first
-      setTimeout(() => {
-        this.view.measureScrollPosition();
-        const endingHeight = this.view.scrollHeight;
-        const delta = endingHeight - startingHeight;
-        const height = this.view.outerHeight;
-
-        const newScrollPosition = this.view.scrollPosition + delta - height;
-        this.view.$el.scrollTop(newScrollPosition);
-      }, 1);
-    },
-    fetchMessages() {
-      window.log.info('fetchMessages');
-      this.$('.bar-container').show();
-      if (this.inProgressFetch) {
-        window.log.warn('Multiple fetchMessage calls!');
-      }
-
-      // Avoiding await, since we want to capture the promise and make it available via
-      //   this.inProgressFetch
-      // eslint-disable-next-line more/no-then
-      this.inProgressFetch = this.model
-        .fetchContacts()
-        .then(() => this.model.fetchMessages())
-        .then(async () => {
-          this.$('.bar-container').hide();
-          await Promise.all(
-            this.model.messageCollection.where({ unread: 1 }).map(async m => {
-              const latest = await window.Signal.Data.getMessageById(m.id, {
-                Message: Whisper.Message,
-              });
-              m.merge(latest);
-            })
-          );
-          this.inProgressFetch = null;
-        })
-        .catch(error => {
-          window.log.error(
-            'fetchMessages error:',
-            error && error.stack ? error.stack : error
-          );
-          this.inProgressFetch = null;
-        });
-
-      return this.inProgressFetch;
-    },
-
-    addMessage(message) {
+    async addMessage(message) {
       // This is debounced, so it won't hit the database too often.
       this.lazyUpdateVerified();
 
@@ -1129,109 +1830,6 @@
       //   anything in it unless it has an associated view. This is so, when we
       //   fetch on open, it's clean.
       this.model.addSingleMessage(message);
-
-      if (message.isOutgoing()) {
-        this.removeLastSeenIndicator();
-      }
-      if (this.lastSeenIndicator) {
-        this.lastSeenIndicator.increment(1);
-      }
-
-      if (!this.isHidden() && !window.isFocused()) {
-        // The conversation is visible, but window is not focused
-        if (!this.lastSeenIndicator) {
-          this.resetLastSeenIndicator({ scroll: false });
-        } else if (
-          this.view.atBottom() &&
-          this.model.get('unreadCount') === this.lastSeenIndicator.getCount()
-        ) {
-          // The count check ensures that the last seen indicator is still in
-          //   sync with the real number of unread, so we can scroll to it.
-          //   We only do this if we're at the bottom, because that signals that
-          //   the user is okay with us changing scroll around so they see the
-          //   right unseen message first.
-          this.resetLastSeenIndicator({ scroll: true });
-        }
-      } else if (!this.isHidden() && window.isFocused()) {
-        // The conversation is visible and in focus
-        this.markRead();
-
-        // When we're scrolled up and we don't already have a last seen indicator
-        //   we add a new one.
-        if (!this.view.atBottom() && !this.lastSeenIndicator) {
-          this.resetLastSeenIndicator({ scroll: false });
-        }
-      }
-    },
-
-    onClick() {
-      // If there are sub-panels open, we don't want to respond to clicks
-      if (!this.panels || !this.panels.length) {
-        this.markRead();
-      }
-    },
-
-    findNewestVisibleUnread() {
-      const collection = this.model.messageCollection;
-      const { length } = collection;
-      const viewportBottom = this.view.outerHeight;
-      const unreadCount = this.model.get('unreadCount') || 0;
-
-      // Start with the most recent message, search backwards in time
-      let foundUnread = 0;
-      for (let i = length - 1; i >= 0; i -= 1) {
-        // Search the latest 30, then stop if we believe we've covered all known
-        //   unread messages. The unread should be relatively recent.
-        // Why? local notifications can be unread but won't be reflected the
-        //   conversation's unread count.
-        if (i > 30 && foundUnread >= unreadCount) {
-          return null;
-        }
-
-        const message = collection.at(i);
-        if (!message.get('unread')) {
-          // eslint-disable-next-line no-continue
-          continue;
-        }
-
-        foundUnread += 1;
-
-        const el = this.$(`#${message.id}`);
-        const position = el.position();
-        const { top } = position;
-
-        // We're fully below the viewport, continue searching up.
-        if (top > viewportBottom) {
-          // eslint-disable-next-line no-continue
-          continue;
-        }
-
-        // If the bottom fits on screen, we'll call it visible. Even if the
-        //   message is really tall.
-        const height = el.height();
-        const bottom = top + height;
-        if (bottom <= viewportBottom) {
-          return message;
-        }
-
-        // Continue searching up.
-      }
-
-      return null;
-    },
-
-    markRead() {
-      let unread;
-
-      if (this.view.atBottom()) {
-        unread = this.model.messageCollection.last();
-      } else {
-        unread = this.findNewestVisibleUnread();
-      }
-
-      if (unread) {
-        this.model.markRead(unread.get('received_at'));
-      }
     },
 
     async showMembers(e, providedMembers, options = {}) {
@@ -1301,11 +1899,30 @@
       }
     },
 
+    downloadAttachmentWrapper(messageId) {
+      const message = this.model.messageCollection.get(messageId);
+      if (!message) {
+        throw new Error(
+          `downloadAttachmentWrapper: Did not find message for id ${messageId}`
+        );
+      }
+
+      const { attachments, sent_at: timestamp } = message.attributes;
+      if (!attachments || attachments.length < 1) {
+        return;
+      }
+
+      const attachment = attachments[0];
+      const { fileName } = attachment;
+
+      const isDangerous = window.Signal.Util.isFileDangerous(fileName || '');
+
+      this.downloadAttachment({ attachment, timestamp, isDangerous });
+    },
+
     downloadAttachment({ attachment, timestamp, isDangerous }) {
       if (isDangerous) {
-        const toast = new Whisper.DangerousFileTypeToast();
-        toast.$el.appendTo(this.$el);
-        toast.render();
+        this.showToast(Whisper.DangerousFileTypeToast);
         return;
       }
 
@@ -1380,6 +1997,8 @@
         return {
           objectURL: getAbsoluteTempPath(path),
           contentType,
+          onSave: null, // important so download button is omitted
+          isViewOnce: true,
         };
       };
       this.lightboxView = new Whisper.ReactWrapperView({
@@ -1410,7 +2029,6 @@
           message.trigger('unload');
           this.model.messageCollection.remove(message.id);
           this.resetPanel();
-          this.updateHeader();
         },
       });
 
@@ -1547,10 +2165,13 @@
         );
       }
 
+      if (!message.isNormalBubble()) {
+        return;
+      }
+
       const onClose = () => {
         this.stopListening(message, 'change', update);
         this.resetPanel();
-        this.updateHeader();
       };
 
       const props = message.getPropsForMessageDetail();
@@ -1577,7 +2198,6 @@
         JSX: Signal.State.Roots.createStickerManager(window.reduxStore),
         onClose: () => {
           this.resetPanel();
-          this.updateHeader();
         },
       });
 
@@ -1592,7 +2212,7 @@
         className: 'contact-detail-pane panel',
         props: {
           contact,
-          signalAccount,
+          hasSignalAccount: Boolean(signalAccount),
           onSendMessage: () => {
             if (signalAccount) {
               this.openConversation(signalAccount);
@@ -1601,7 +2221,6 @@
         },
         onClose: () => {
           this.resetPanel();
-          this.updateHeader();
         },
       });
 
@@ -1615,6 +2234,11 @@
 
     listenBack(view) {
       this.panels = this.panels || [];
+
+      if (this.panels.length === 0) {
+        this.previousFocus = document.activeElement;
+      }
+
       this.panels.unshift(view);
       view.$el.insertAfter(this.$('.panel').last());
       view.$el.one('animationend', () => {
@@ -1628,11 +2252,23 @@
 
       const view = this.panels.shift();
 
+      if (
+        this.panels.length === 0 &&
+        this.previousFocus &&
+        this.previousFocus.focus
+      ) {
+        this.previousFocus.focus();
+        this.previousFocus = null;
+      }
+
       if (this.panels.length > 0) {
         this.panels[0].$el.fadeIn(250);
       }
+      this.updateHeader();
+
       view.$el.addClass('panel--remove').one('transitionend', () => {
         view.remove();
+
         if (this.panels.length === 0) {
           // Make sure poppers are positioned properly
           window.dispatchEvent(new Event('resize'));
@@ -1656,8 +2292,8 @@
       try {
         await this.confirm(i18n('deleteConversationConfirmation'));
         try {
+          this.model.trigger('unload', 'delete messages');
           await this.model.destroyMessages();
-          this.unload('delete messages');
           this.model.updateLastMessage();
         } catch (error) {
           window.log.error(
@@ -1756,16 +2392,37 @@
     },
 
     async setQuoteMessage(messageId) {
-      this.quote = null;
-      this.quotedMessage = null;
+      const model = messageId
+        ? await getMessageById(messageId, {
+            Message: Whisper.Message,
+          })
+        : null;
 
-      if (this.quoteHolder) {
-        this.quoteHolder.unload();
-        this.quoteHolder = null;
+      if (model && !model.isNormalBubble()) {
+        return;
       }
 
-      const message = this.model.messageCollection.get(messageId);
-      if (message) {
+      this.quote = null;
+      this.quotedMessage = null;
+      this.quoteHolder = null;
+
+      const existing = this.model.get('quotedMessageId');
+      if (existing !== messageId) {
+        this.model.set({
+          quotedMessageId: messageId,
+          draftChanged: true,
+        });
+
+        await this.saveModel();
+      }
+
+      if (this.quoteView) {
+        this.quoteView.remove();
+        this.quoteView = null;
+      }
+
+      if (model) {
+        const message = MessageController.register(model.id, model);
         this.quotedMessage = message;
 
         if (message) {
@@ -1785,7 +2442,6 @@
         this.quoteView = null;
       }
       if (!this.quotedMessage) {
-        this.view.restoreBottomOffset();
         return;
       }
 
@@ -1798,7 +2454,9 @@
 
       const props = message.getPropsForQuote();
 
-      this.listenTo(message, 'scroll-to-message', this.scrollToMessage);
+      this.listenTo(message, 'scroll-to-message', () => {
+        this.scrollToMessage(message.quotedMessage.id);
+      });
 
       const contact = this.quotedMessage.getContact();
       if (contact) {
@@ -1808,16 +2466,16 @@
       this.quoteView = new Whisper.ReactWrapperView({
         className: 'quote-wrapper',
         Component: window.Signal.Components.Quote,
-        elCallback: el => this.$('.send').prepend(el),
+        elCallback: el =>
+          this.$(this.compositionApi.current.attSlotRef.current).prepend(el),
         props: Object.assign({}, props, {
           withContentAbove: true,
           onClose: () => {
+            // This can't be the normal 'onClose' because that is always run when this
+            //   view is removed from the DOM, and would clear the draft quote.
             this.setQuoteMessage(null);
           },
         }),
-        onInitialRender: () => {
-          this.view.restoreBottomOffset();
-        },
       });
     },
 
@@ -1847,39 +2505,37 @@
         return;
       }
 
-      this.removeLastSeenIndicator();
       this.model.clearTypingTimers();
 
-      let toast;
+      let ToastView;
       if (extension.expired()) {
-        toast = new Whisper.ExpiredToast();
+        ToastView = Whisper.ExpiredToast;
       }
       if (this.model.isPrivate() && storage.isBlocked(this.model.id)) {
-        toast = new Whisper.BlockedToast();
+        ToastView = Whisper.BlockedToast;
       }
       if (!this.model.isPrivate() && storage.isGroupBlocked(this.model.id)) {
-        toast = new Whisper.BlockedGroupToast();
+        ToastView = Whisper.BlockedGroupToast;
       }
       if (!this.model.isPrivate() && this.model.get('left')) {
-        toast = new Whisper.LeftGroupToast();
+        ToastView = Whisper.LeftGroupToast;
       }
       if (message.length > MAX_MESSAGE_BODY_LENGTH) {
-        toast = new Whisper.MessageBodyTooLongToast();
+        ToastView = Whisper.MessageBodyTooLongToast;
       }
 
-      if (toast) {
-        toast.$el.appendTo(this.$el);
-        toast.render();
+      if (ToastView) {
+        this.showToast(ToastView);
         this.focusMessageFieldAndClearDisabled();
         return;
       }
 
       try {
-        if (!message.length && !this.fileInput.hasFiles()) {
+        if (!message.length && !this.hasFiles() && !this.voiceNoteAttachment) {
           return;
         }
 
-        const attachments = await this.fileInput.getFiles();
+        const attachments = await this.getFiles();
         const sendDelta = Date.now() - this.sendStart;
         window.log.info('Send pre-checks took', sendDelta, 'milliseconds');
 
@@ -1893,7 +2549,7 @@
         this.compositionApi.current.reset();
         this.setQuoteMessage(null);
         this.resetLinkPreview();
-        this.fileInput.clearAttachments();
+        this.clearAttachments();
       } catch (error) {
         window.log.error(
           'Error pulling attached files before send',
@@ -1906,11 +2562,31 @@
 
     onEditorStateChange(messageText, caretLocation) {
       this.maybeBumpTyping(messageText);
+      this.debouncedSaveDraft(messageText);
       this.debouncedMaybeGrabLinkPreview(messageText, caretLocation);
     },
 
-    onEditorSizeChange() {
-      this.view.scrollToBottomIfNeeded();
+    async saveDraft(messageText) {
+      const trimmed =
+        messageText && messageText.length > 0 ? messageText.trim() : '';
+
+      if (this.model.get('draft') && (!messageText || trimmed.length === 0)) {
+        this.model.set({
+          draft: null,
+          draftChanged: true,
+        });
+        await this.saveModel();
+
+        return;
+      }
+
+      if (messageText !== this.model.get('draft')) {
+        this.model.set({
+          draft: messageText,
+          draftChanged: true,
+        });
+        await this.saveModel();
+      }
     },
 
     maybeGrabLinkPreview(message, caretLocation) {
@@ -1923,7 +2599,7 @@
         return;
       }
       // If we have attachments, don't add link preview
-      if (this.fileInput.hasFiles()) {
+      if (this.hasFiles()) {
         return;
       }
       // If we're behind a user-configured proxy, we don't support link previews
@@ -2138,18 +2814,18 @@
             );
           }
 
-          const data = await this.makeChunkedRequest(imageUrl);
+          const chunked = await this.makeChunkedRequest(imageUrl);
 
           // Ensure that this file is either small enough or is resized to meet our
           //   requirements for attachments
-          const withBlob = await this.fileInput.autoScale({
-            contentType: data.contentType,
-            file: new Blob([data.data], {
-              type: data.contentType,
+          const withBlob = await this.autoScale({
+            contentType: chunked.contentType,
+            file: new Blob([chunked.data], {
+              type: chunked.contentType,
             }),
           });
 
-          const attachment = await this.fileInput.readFile(withBlob);
+          const data = await this.arrayBufferFromFile(withBlob.file);
           objectUrl = URL.createObjectURL(withBlob.file);
 
           const dimensions = await Signal.Types.VisualAttachment.getImageDimensions(
@@ -2160,7 +2836,8 @@
           );
 
           image = {
-            ...attachment,
+            data,
+            size: data.byteLength,
             ...dimensions,
             contentType: withBlob.file.type,
           };
@@ -2244,7 +2921,6 @@
         this.previewView = null;
       }
       if (!this.currentlyMatchedLink) {
-        this.view.restoreBottomOffset();
         return;
       }
 
@@ -2262,11 +2938,9 @@
       this.previewView = new Whisper.ReactWrapperView({
         className: 'preview-wrapper',
         Component: window.Signal.Components.StagedLinkPreview,
-        elCallback: el => this.$('.send').prepend(el),
+        elCallback: el =>
+          this.$(this.compositionApi.current.attSlotRef.current).prepend(el),
         props,
-        onInitialRender: () => {
-          this.view.restoreBottomOffset();
-        },
       });
     },
 
@@ -2299,13 +2973,6 @@
       if (messageText.length) {
         this.model.throttledBumpTyping();
       }
-    },
-
-    isHidden() {
-      return (
-        this.$el.css('display') === 'none' ||
-        this.$('.panel').css('display') === 'none'
-      );
     },
   });
 })();

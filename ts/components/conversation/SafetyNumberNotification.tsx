@@ -1,5 +1,4 @@
 import React from 'react';
-// import classNames from 'classnames';
 
 import { ContactName } from './ContactName';
 import { Intl } from '../Intl';
@@ -56,15 +55,14 @@ export class SafetyNumberNotification extends React.Component<Props> {
             i18n={i18n}
           />
         </div>
-        <div
-          role="button"
+        <button
           onClick={() => {
             showIdentity(contact.id);
           }}
           className="module-safety-number-notification__button"
         >
           {i18n('verifyNewNumber')}
-        </div>
+        </button>
       </div>
     );
   }
